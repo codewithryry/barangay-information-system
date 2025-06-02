@@ -35,6 +35,7 @@ import AdminDashboard from '@/components/admin/AdminDashboard.vue';
 import NotFound from '@/views/NotFound.vue'
 
 
+
 const routes = [
   { path: '/', name: 'home', component: Home, meta: { title: 'Home' } },
   { path: '/login', name: 'login', component: Login, meta: { requiresGuest: true, title: 'Login' } },

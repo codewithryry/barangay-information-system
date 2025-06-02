@@ -1,9 +1,7 @@
 <template>
 
   <div class="pending-approval-page">
-    <br>
-    <br>
-    <br>
+
     <!-- Hero Section -->
     <section class="hero-section bg-primary-gradient py-3">
       <div class="container py-3">

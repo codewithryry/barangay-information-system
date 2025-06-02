@@ -1,9 +1,10 @@
 <template>
-    <br>
-    <br>
-    <br>
   <div class="dashboard-container">
     <!-- Header Section -->
+       <br>
+        <br>
+          <br>
+        <br>
     <div class="dashboard-header">
       <div class="header-content">
         <div>
@@ -39,7 +40,7 @@
         </div>
         <p>Manage your personal information and settings</p>
         <router-link to="/resident/profile" class="card-action">
-          View Profile <span>&rarr;</span>
+          View Profile <span>→</span>
         </router-link>
       </div>
 
@@ -59,7 +60,7 @@
         </div>
         <p>Request barangay certificates and official documents</p>
         <router-link to="/resident/request" class="card-action">
-          Make Request <span>&rarr;</span>
+          Make Request <span>→</span>
         </router-link>
       </div>
 
@@ -75,34 +76,33 @@
         </div>
         <p>Track the status of your submitted requests</p>
         <a href="#" class="card-action" @click.prevent="openRequestModal">
-          View Requests <span>&rarr;</span>
+          View Requests <span>→</span>
         </a>
       </div>
     </div>
 
-    <!-- Announcements Section -->
+    <!-- Resident-Specific Announcements Section -->
     <div class="section-title">
-      <h2>Latest Announcements</h2>
-      <router-link to="/announcements" class="view-all">View All</router-link>
+      <h2>Latest Announcements for You</h2>
       <div class="title-decoration"></div>
     </div>
     
     <div class="announcements-grid">
-      <div v-for="announcement in announcements" :key="announcement.id" class="announcement-card">
+      <div v-for="announcement in filteredResidentSpecificAnnouncements" :key="announcement.id" class="announcement-card">
         <div class="announcement-badge" :class="announcement.type.toLowerCase()">
           {{ announcement.type }}
         </div>
         <h3>{{ announcement.title }}</h3>
         <p>{{ announcement.content }}</p>
         <div class="announcement-footer">
-          <span class="date">{{ formatDate(announcement.date) }}</span>
-          <router-link to="#" class="read-more">Read more</router-link>
+          <span class="date">{{ formatAnnouncementDate(announcement.createdAt) }}</span>
+          <a href="#" class="read-more" @click.prevent="openAnnouncementModal(announcement)">Read more</a>
         </div>
       </div>
     </div>
 
-    <!-- Empty State (if no announcements) -->
-    <div v-if="announcements.length === 0" class="empty-state">
+    <!-- Empty State (if no resident-specific announcements) -->
+    <div v-if="filteredResidentSpecificAnnouncements.length === 0" class="empty-state">
       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
         <circle cx="10" cy="16" r="2"></circle>
@@ -110,8 +110,8 @@
         <line x1="16" y1="6" x2="16" y2="8"></line>
         <line x1="8" y1="6" x2="8" y2="8"></line>
       </svg>
-      <h3>No announcements yet</h3>
-      <p>Check back later for updates from your barangay</p>
+      <h3>No announcements for you yet</h3>
+      <p>Check back later for personalized updates from your barangay</p>
     </div>
 
     <!-- Request Status Modal -->
@@ -119,7 +119,7 @@
       <div class="modal-container">
         <div class="modal-header">
           <h3>Request Status</h3>
-          <button class="modal-close" @click="closeModal">&times;</button>
+          <button class="modal-close" @click="closeModal">×</button>
         </div>
         <div class="modal-body">
           <!-- Search Form -->
@@ -136,8 +136,6 @@
 
           <!-- Request Details -->
           <div v-if="requestDetails" class="status-result">
-
-
             <!-- Status Message -->
             <div class="status-message-container" :class="requestDetails.status">
               <div>
@@ -190,11 +188,34 @@
         </div>
       </div>
     </div>
+
+    <!-- Announcement Details Modal -->
+    <div v-if="showAnnouncementModal" class="modal-overlay" @click.self="closeAnnouncementModal">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3>Announcement Details</h3>
+          <button class="modal-close" @click="closeAnnouncementModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="selectedAnnouncement" class="announcement-details">
+            <div class="announcement-badge" :class="selectedAnnouncement.type.toLowerCase()">
+              {{ selectedAnnouncement.type }}
+            </div>
+            <h4 class="announcement-title">{{ selectedAnnouncement.title }}</h4>
+            <p class="announcement-content">{{ selectedAnnouncement.content }}</p>
+            <p class="announcement-date">Posted on: {{ formatAnnouncementDate(selectedAnnouncement.createdAt) }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="closeAnnouncementModal">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 
 export default {
@@ -202,36 +223,17 @@ export default {
   data() {
     return {
       currentDate: new Date(),
-      announcements: [
-        {
-          id: '1',
-          title: 'Community Clean-up Day',
-          content: 'Join us this Saturday from 8AM to 12PM for our monthly community clean-up. Gloves and bags will be provided.',
-          date: '2023-06-15',
-          type: 'Event'
-        },
-        {
-          id: '2',
-          title: 'New Barangay ID Requirements',
-          content: 'Starting July 1st, two valid IDs will be required for all new Barangay ID applications.',
-          date: '2023-06-10',
-          type: 'Policy'
-        },
-        {
-          id: '3',
-          title: 'Water Interruption Notice',
-          content: 'There will be a scheduled water interruption on June 20 from 9AM to 3PM for pipeline maintenance.',
-          date: '2023-06-05',
-          type: 'Service'
-        }
-      ],
+      announcements: [],
       timeInterval: null,
       showRequestModal: false,
       requestIdInput: '',
       requestDetails: null,
       errorMessage: '',
       userRequests: [],
-      userProfile: null
+      userProfile: null,
+      loadingAnnouncements: false,
+      showAnnouncementModal: false,
+      selectedAnnouncement: null
     };
   },
   computed: {
@@ -254,6 +256,21 @@ export default {
     },
     userDisplayName() {
       return this.userProfile?.name || this.$store.state.auth.user?.displayName || 'User';
+    },
+    currentUserId() {
+      return this.$store.state.auth.user?.uid || '';
+    },
+    filteredResidentSpecificAnnouncements() {
+      return this.announcements
+        .filter(a => {
+          // Only include announcements specifically targeted to this resident via recipientIds
+          return a.recipientIds?.length && a.recipientIds.includes(this.currentUserId);
+        })
+        .sort((a, b) => {
+          const dateA = a.createdAt?.seconds || (a.createdAt instanceof Date ? a.createdAt.getTime() / 1000 : 0);
+          const dateB = b.createdAt?.seconds || (b.createdAt instanceof Date ? b.createdAt.getTime() / 1000 : 0);
+          return dateB - dateA;
+        });
     }
   },
   methods: {
@@ -265,7 +282,17 @@ export default {
       };
       return new Date(dateString).toLocaleDateString('en-US', options);
     },
-    
+    formatAnnouncementDate(date) {
+      if (!date) return '';
+      const dateObj = date.toDate ? date.toDate() : new Date(date);
+      return dateObj.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    },
     formatRequestDate(timestamp) {
       if (!timestamp) return 'N/A';
       const date = timestamp.toDate();
@@ -278,14 +305,12 @@ export default {
       };
       return date.toLocaleDateString('en-US', options);
     },
-    
     formatDocumentType(type) {
       if (!type) return 'N/A';
       return type.split('-').map(word => 
         word.charAt(0).toUpperCase() + word.slice(1)
       ).join(' ');
     },
-    
     async fetchUserProfile() {
       try {
         const user = this.$store.state.auth.user;
@@ -301,14 +326,13 @@ export default {
         console.error("Error fetching user profile:", error);
       }
     },
-    
     async fetchUserRequests() {
       try {
         const user = this.$store.state.auth.user;
         if (!user?.uid) return;
         
         const requestsRef = collection(db, 'requests');
-        const q = query(requestsRef, where('userId', '==', user.uid));
+        const q = query(requestsRef, where('userId', '==', this.currentUserId));
         const querySnapshot = await getDocs(q);
         
         this.userRequests = querySnapshot.docs.map(doc => ({
@@ -320,25 +344,37 @@ export default {
         this.errorMessage = 'Failed to load your requests. Please try again later.';
       }
     },
-    
-    startDateTimeUpdates() {
+    async fetchAnnouncements() {
+      this.loadingAnnouncements = true;
+      try {
+        const snapshot = await getDocs(collection(db, 'announcements'));
+        this.announcements = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          type: doc.data().type || 'General'
+        }));
+      } catch (error) {
+        console.error('Failed to fetch announcements:', error);
+        this.errorMessage = 'Failed to load announcements. Please try again.';
+      } finally {
+        this.loadingAnnouncements = false;
+      }
+    },
+    startDateTimeUpdate() {
       this.currentDate = new Date();
       this.timeInterval = setInterval(() => {
         this.currentDate = new Date();
       }, 60000);
     },
-    
     openRequestModal() {
       this.showRequestModal = true;
       this.requestIdInput = '';
       this.requestDetails = null;
       this.errorMessage = '';
     },
-    
     closeModal() {
       this.showRequestModal = false;
     },
-    
     async checkRequestStatus() {
       if (!this.requestIdInput.trim()) {
         this.errorMessage = 'Please enter a request ID';
@@ -346,9 +382,8 @@ export default {
       }
       
       try {
-        // Check if the request exists in the user's requests
         const foundRequest = this.userRequests.find(
-          req => req.id === this.requestIdInput.trim()
+          request => request.id === this.requestIdInput.trim()
         );
         
         if (foundRequest) {
@@ -357,7 +392,6 @@ export default {
           return;
         }
 
-        // If not found in local cache, try to fetch from Firestore
         const requestRef = doc(db, 'requests', this.requestIdInput.trim());
         const requestDoc = await getDoc(requestRef);
         
@@ -368,9 +402,7 @@ export default {
         }
 
         const requestData = requestDoc.data();
-        
-        // Verify the request belongs to the current user
-        const user = this.$store.state.auth.user;
+        const user = this.$store.state.user;
         if (requestData.userId !== user.uid) {
           this.requestDetails = null;
           this.errorMessage = 'Request ID not found in your records.';
@@ -382,18 +414,26 @@ export default {
           ...requestData
         };
         this.errorMessage = '';
-        
       } catch (error) {
         console.error("Error checking request status:", error);
         this.requestDetails = null;
         this.errorMessage = 'An error occurred while checking the request status. Please try again.';
       }
+    },
+    openAnnouncementModal(announcement) {
+      this.selectedAnnouncement = announcement;
+      this.showAnnouncementModal = true;
+    },
+    closeAnnouncementModal() {
+      this.showAnnouncementModal = false;
+      this.selectedAnnouncement = null;
     }
   },
   async mounted() {
     await this.fetchUserProfile();
     await this.fetchUserRequests();
-    this.startDateTimeUpdates();
+    await this.fetchAnnouncements();
+    this.startDateTimeUpdate();
   },
   beforeUnmount() {
     if (this.timeInterval) {
@@ -655,6 +695,10 @@ export default {
   background-color: #10b981;
 }
 
+.announcement-badge.general {
+  background-color: #6b7280;
+}
+
 .announcement-card h3 {
   font-size: 1.1rem;
   font-weight: 600;
@@ -721,7 +765,7 @@ export default {
   margin: 0 auto;
 }
 
-/* Modal Styles */
+/* Modal Styles (Shared) */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -740,7 +784,7 @@ export default {
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
@@ -765,7 +809,7 @@ export default {
   font-size: 1.5rem;
   cursor: pointer;
   color: #718096;
-  padding: 0 0.5rem;
+  padding: 0.2rem 0.5rem;
 }
 
 .modal-close:hover {
@@ -776,6 +820,15 @@ export default {
   padding: 1.5rem;
 }
 
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Request Status Modal Specific */
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -802,7 +855,6 @@ export default {
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-/* Request Status Details */
 .status-result {
   margin-top: 1.5rem;
   border-radius: 12px;
@@ -810,76 +862,8 @@ export default {
   border: 1px solid #e2e8f0;
 }
 
-.status-header {
-  padding: 1.25rem;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: center;
-}
-
-.document-type {
-  margin: 0.5rem 0 0;
-  font-size: 1.1rem;
-  color: #1a202c;
-  font-weight: 600;
-}
-
-.request-id {
-  margin: 0.25rem 0 0;
-  font-size: 0.8rem;
-  color: #718096;
-}
-
-.request-details {
-  padding: 1.25rem;
-  background-color: white;
-}
-
-.detail-row {
-  display: flex;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-}
-
-.detail-label {
-  font-weight: 500;
-  color: #4a5568;
-  min-width: 120px;
-}
-
-.detail-value {
-  color: #2d3748;
-  flex-grow: 1;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-weight: 600;
-  font-size: 0.75rem;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.status-badge.approved {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.status-badge.pending {
-  background-color: #fef9c3;
-  color: #854d0e;
-}
-
-.status-badge.rejected {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
 .status-message-container {
   padding: 1.25rem;
-  border-top: 1px solid #e2e8f0;
 }
 
 .status-message-container.approved {
@@ -948,14 +932,6 @@ export default {
   flex-shrink: 0;
 }
 
-.modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
 .btn-primary {
   background-color: #4f46e5;
   color: white;
@@ -987,6 +963,32 @@ export default {
   border-color: #a0aec0;
 }
 
+/* Announcement Modal Specific Styles */
+.announcement-details {
+  position: relative;
+  padding-top: 1rem;
+}
+
+.announcement-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: #1a202c;
+  font-weight: 600;
+}
+
+.announcement-content {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.announcement-date {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #718096;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .header-content {
@@ -1005,7 +1007,8 @@ export default {
     font-size: 1.75rem;
   }
   
-  .card-grid, .announcements-grid {
+  .card-grid,
+  .announcements-grid {
     grid-template-columns: 1fr;
   }
   
@@ -1031,7 +1034,8 @@ export default {
     flex-direction: column;
   }
   
-  .btn-primary, .btn-secondary {
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
   }
 }

@@ -11,7 +11,7 @@
               </span>
             </div>
             <h1 class="display-4 fw-bold text-white mb-3">
-            <span class="text-warning">Announcements</span>
+              <span class="text-warning">Announcements</span>
             </h1>
             <p class="lead text-white mb-4">
               Stay informed about important news and events in <strong>Barangay [Name]</strong>
@@ -28,18 +28,30 @@
       <div class="container">
         <div class="section-header text-center mb-5">
           <h2 class="display-5 fw-bold text-dark mb-3">
-            <i class=" text-primary me-2"></i> Latest Announcements
+            <i class="bi bi-megaphone text-primary me-2"></i> Latest Announcements
           </h2>
           <p class="text-muted mx-auto" style="max-width: 700px;">
             Important updates, events, and notices from the barangay
           </p>
         </div>
-        
-        <div class="row justify-content-center">
+
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center">
+          <p>Loading announcements...</p>
+        </div>
+        <!-- Error State -->
+        <div v-else-if="error" class="text-center text-danger">
+          <p>{{ error }}</p>
+        </div>
+        <!-- Announcements Display -->
+        <div v-else class="row justify-content-center">
           <div class="col-lg-8">
             <!-- Announcement Cards -->
-            <div class="announcement-card card mb-4 border-0 shadow-sm rounded-3 overflow-hidden" 
-                 v-for="(announcement, index) in announcements" :key="index">
+            <div
+              class="announcement-card card mb-4 border-0 shadow-sm rounded-3 overflow-hidden"
+              v-for="(announcement, index) in paginatedAnnouncements"
+              :key="announcement.id"
+            >
               <div class="card-body p-4">
                 <div class="d-flex align-items-start">
                   <div class="announcement-date bg-primary bg-opacity-10 text-primary rounded-2 p-3 text-center me-4">
@@ -50,9 +62,12 @@
                   <div class="flex-grow-1">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                       <h3 class="h4 fw-bold mb-0">{{ announcement.title }}</h3>
-                      <span class="badge rounded-pill" 
-                            :class="`bg-${announcement.type.color}-subtle text-${announcement.type.color}-emphasis`">
+                      <span
+                        class="badge rounded-pill"
+                        :class="`bg-${announcement.type.color}-subtle text-${announcement.type.color}-emphasis`"
+                      >
                         {{ announcement.type.label }}
+                        <i v-if="announcement.isImportant" class="bi bi-exclamation-circle ms-1"></i>
                       </span>
                     </div>
                     <p class="text-muted mb-3">{{ announcement.summary }}</p>
@@ -60,9 +75,11 @@
                       <span class="text-muted small">
                         <i class="bi bi-person-fill me-1"></i> Posted by: {{ announcement.postedBy }}
                       </span>
-                      <button class="btn btn-sm btn-outline-primary rounded-pill" 
-                              data-bs-toggle="modal" 
-                              :data-bs-target="`#announcementModal${index}`">
+                      <button
+                        class="btn btn-sm btn-outline-primary rounded-pill"
+                        data-bs-toggle="modal"
+                        :data-bs-target="`#announcementModal${index}`"
+                      >
                         Read More <i class="bi bi-arrow-right ms-1"></i>
                       </button>
                     </div>
@@ -74,14 +91,19 @@
             <!-- Pagination -->
             <nav aria-label="Announcements pagination" class="mt-5">
               <ul class="pagination justify-content-center">
-                <li class="page-item disabled">
-                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                  <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">Previous</a>
                 </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                  <a class="page-link" href="#">Next</a>
+                <li
+                  class="page-item"
+                  v-for="page in totalPages"
+                  :key="page"
+                  :class="{ active: page === currentPage }"
+                >
+                  <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+                </li>
+                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                  <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">Next</a>
                 </li>
               </ul>
             </nav>
@@ -91,8 +113,14 @@
     </section>
 
     <!-- Announcement Modals -->
-    <div v-for="(announcement, index) in announcements" :key="`modal-${index}`" 
-         class="modal fade" :id="`announcementModal${index}`" tabindex="-1" aria-hidden="true">
+    <div
+      v-for="(announcement, index) in paginatedAnnouncements"
+      :key="`modal-${announcement.id}`"
+      class="modal fade"
+      :id="`announcementModal${index}`"
+      tabindex="-1"
+      aria-hidden="true"
+    >
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header border-0">
@@ -109,21 +137,36 @@
                 <p class="mb-1 small text-muted">
                   <i class="bi bi-person-fill me-1"></i> Posted by: {{ announcement.postedBy }}
                 </p>
-                <span class="badge rounded-pill small" 
-                      :class="`bg-${announcement.type.color}-subtle text-${announcement.type.color}-emphasis`">
+                <span
+                  class="badge rounded-pill small"
+                  :class="`bg-${announcement.type.color}-subtle text-${announcement.type.color}-emphasis`"
+                >
                   {{ announcement.type.label }}
+                  <i v-if="announcement.isImportant" class="bi bi-exclamation-circle ms-1"></i>
                 </span>
               </div>
             </div>
-            
+
             <div class="announcement-content mb-4">
-              <p>{{ announcement.fullContent }}</p>
-              
+              <div
+                v-if="announcement.fullContent && isValidContent(announcement.fullContent)"
+                v-html="formatContent(announcement.fullContent)"
+                class="formatted-content"
+              ></div>
+              <p v-else class="text-muted">
+                No content available for this announcement.
+              </p>
+
               <div v-if="announcement.attachments.length > 0" class="mt-4">
                 <h6 class="fw-bold mb-3">Attachments:</h6>
                 <div class="d-flex flex-wrap gap-2">
-                  <a v-for="(file, fileIndex) in announcement.attachments" :key="fileIndex" 
-                     href="#" class="btn btn-sm btn-outline-secondary rounded-pill">
+                  <a
+                    v-for="(file, fileIndex) in announcement.attachments"
+                    :key="fileIndex"
+                    :href="file.url || '#'"
+                    class="btn btn-sm btn-outline-secondary rounded-pill"
+                    target="_blank"
+                  >
                     <i class="bi me-2" :class="getFileIcon(file.type)"></i>
                     {{ file.name }}
                   </a>
@@ -140,77 +183,212 @@
         </div>
       </div>
     </div>
-        <!-- Add this at the bottom of your template, before the closing </div> -->
-<Chatbot />
 
+    <!-- Chatbot Component -->
+    <Chatbot />
   </div>
 </template>
 
 <script>
+import DOMPurify from 'dompurify';
 import Chatbot from '@/components/Chatbot.vue';
+import { db } from '@/firebase/config';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export default {
   name: 'AnnouncementsPage',
-    components: {
-    Chatbot
+  components: {
+    Chatbot,
+  },
+  props: {
+    currentUserId: {
+      type: String,
+      required: true,
+    },
+    role: {
+      type: String,
+      default: 'resident',
+    },
   },
   data() {
     return {
-      announcements: [
-        {
-          title: 'Community Clean-up Drive',
-          summary: 'Join us for our monthly clean-up activity this Saturday at the barangay plaza',
-          fullContent: 'The Barangay Council invites all residents to participate in our monthly community clean-up drive this coming Saturday, June 10, from 7:00 AM to 11:00 AM at the Barangay Plaza. We will be cleaning the main streets and public areas. Please bring your own cleaning materials (broom, rake, gloves). Snacks will be provided to all participants. This is part of our "Clean and Green Barangay" program. Your cooperation is highly appreciated.',
-          date: { day: '05', month: 'Jun', year: '2023' },
-          postedBy: 'Barangay Secretary',
-          type: { label: 'Event', color: 'success' },
-          attachments: [
-            { name: 'Clean-up Schedule.pdf', type: 'pdf' },
-            { name: 'Participant Form.docx', type: 'word' }
-          ]
-        },
-        {
-          title: 'Water Interruption Notice',
-          summary: 'Scheduled water service interruption on June 8, 9:00 AM to 3:00 PM',
-          fullContent: 'Please be advised that there will be a scheduled water service interruption on June 8, 2023, from 9:00 AM to 3:00 PM due to pipeline maintenance work by the Municipal Water District. Affected areas include Zones 1, 2, and 3. We recommend storing enough water for your household needs during this period. For emergency water needs, the barangay will provide temporary water stations at the following locations: (1) Barangay Hall, (2) Zone 1 Basketball Court, (3) Near the Elementary School. We apologize for the inconvenience and thank you for your understanding.',
-          date: { day: '01', month: 'Jun', year: '2023' },
-          postedBy: 'Barangay Captain',
-          type: { label: 'Public Service', color: 'info' },
-          attachments: [
-            { name: 'Affected Areas.jpg', type: 'image' }
-          ]
-        },
-        {
-          title: 'New Barangay Ordinance No. 2023-05',
-          summary: 'Implementation of new parking regulations effective July 1, 2023',
-          fullContent: 'The Barangay Council has approved Ordinance No. 2023-05, "An Ordinance Regulating Parking Along Major Roads and Public Spaces in Barangay [Name]". Key provisions include: (1) No parking along narrow roads (less than 5 meters wide), (2) Designated parking areas in each zone, (3) No overnight parking of trucks and heavy vehicles in residential areas, (4) Penalties for violations starting at ₱500 for first offense. The full ordinance is available at the Barangay Hall and on our official website. This will take effect on July 1, 2023, to give residents time to adjust. Public consultations will be held on June 15 and 22 at the Barangay Hall.',
-          date: { day: '28', month: 'May', year: '2023' },
-          postedBy: 'Barangay Council',
-          type: { label: 'Ordinance', color: 'warning' },
-          attachments: [
-            { name: 'Ordinance 2023-05.pdf', type: 'pdf' },
-            { name: 'Parking Map.pdf', type: 'pdf' }
-          ]
-        }
-      ]
-    }
+      announcements: [],
+      loading: false,
+      error: null,
+      currentPage: 1,
+      itemsPerPage: 3,
+      adminNameCache: {}, // Cache for admin names to optimize performance
+    };
+  },
+  computed: {
+    paginatedAnnouncements() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.announcements.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.announcements.length / this.itemsPerPage);
+    },
   },
   methods: {
+    formatAdminId(adminId) {
+      if (!adminId || adminId === 'Unknown') {
+        return 'Unknown';
+      }
+      // Display first 4 characters, asterisks for the middle, and last 2 characters
+      const firstPart = adminId.slice(0, 4);
+      const lastPart = adminId.slice(-2);
+      const middleLength = adminId.length - 6; // Total length minus first 4 and last 2
+      const middlePart = middleLength > 0 ? '*'.repeat(middleLength) : '';
+      return `${firstPart}${middlePart}${lastPart}`;
+    },
+    async fetchAdminName(adminId) {
+      if (this.adminNameCache[adminId]) {
+        return this.adminNameCache[adminId]; // Return cached name
+      }
+      try {
+        const adminDocRef = doc(db, 'admin_profiles', adminId);
+        const adminDoc = await getDoc(adminDocRef);
+        if (adminDoc.exists()) {
+          const adminData = adminDoc.data();
+          const name = adminData.name || this.formatAdminId(adminId); // Use formatted adminId if name is not available
+          this.adminNameCache[adminId] = name; // Cache the name
+          return name;
+        }
+        const formattedId = this.formatAdminId(adminId);
+        this.adminNameCache[adminId] = formattedId;
+        return formattedId;
+      } catch (error) {
+        console.error(`Failed to fetch admin name for ID ${adminId}:`, error);
+        const formattedId = this.formatAdminId(adminId);
+        this.adminNameCache[adminId] = formattedId;
+        return formattedId;
+      }
+    },
+    // Method to check if content is valid (not empty or gibberish)
+    isValidContent(content) {
+      if (!content || content.trim() === '') return false;
+      // Basic check for gibberish (e.g., "klskdnxcnxcv" with no spaces or punctuation)
+      const gibberishRegex = /^[a-zA-Z0-9]+$/;
+      return !gibberishRegex.test(content.trim()) || content.length > 20;
+    },
+    // Method to format content (convert newlines to <br> and sanitize)
+formatContent(content) {
+  if (!content) return '';
+  // Split content into lines
+  let lines = content.split('\n').filter(line => line.trim());
+  let formattedLines = lines.map(line => {
+    // Handle bullet points (e.g., ✅ or 📌)
+    if (line.startsWith('✅') || line.startsWith('📌')) {
+      return `<li class="list-item">${line.replace(/^(\✅|📌)\s*/, '')}</li>`;
+    }
+    // Handle headers (e.g., lines with "Reminders:" or starting with "—")
+    if (line.includes('Reminders:') || line.startsWith('—')) {
+      return `<p class="fw-bold mt-3">${line.replace(/^—\s*/, '')}</p>`;
+    }
+    // Default: Wrap in paragraph tags
+    return `<p>${line}</p>`;
+  });
+  // Wrap bullet points in <ul> if they exist
+  let formatted = formattedLines.join('');
+  if (formatted.includes('<li')) {
+    formatted = formatted.replace(/(<li[^>]*>.*?<\/li>)/g, '<ul class="list-unstyled">$1</ul>');
+  }
+  // Clean up multiple <br> tags
+  formatted = formatted.replace(/(<br>){2,}/g, '<br>');
+  // Sanitize with DOMPurify if available
+  if (typeof DOMPurify !== 'undefined') {
+    return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['p', 'br', 'ul', 'li', 'strong', 'em'] });
+  }
+  return formatted.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/on\w+="[^"]*"/gi, '');
+},
+    async fetchAnnouncements() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const snapshot = await getDocs(collection(db, 'announcements'));
+        const announcementsPromises = snapshot.docs.map(async (doc) => {
+          const data = doc.data();
+          const createdAt = data.createdAt?.toDate?.() || data.createdAt || new Date();
+          const adminId = data.adminId || 'Unknown';
+          const postedBy = await this.fetchAdminName(adminId);
+          return {
+            id: doc.id,
+            title: data.title || 'Untitled Announcement',
+            summary: data.summary || data.content?.substring(0, 100) + '...' || 'No summary available',
+            fullContent: data.content || 'No content available',
+            postedBy, // Uses formatted adminId (e.g., 3j6V****lyLNsQw1) if name is unavailable
+            type: data.type || { label: 'General', color: 'primary' },
+            attachments: data.attachments || [],
+            isImportant: data.isImportant || false,
+            recipientIds: data.recipientIds || [],
+            date: {
+              day: createdAt.getDate().toString().padStart(2, '0'),
+              month: createdAt.toLocaleString('en-US', { month: 'short' }),
+              year: createdAt.getFullYear().toString(),
+            },
+          };
+        });
+
+        this.announcements = (await Promise.all(announcementsPromises))
+          .filter((a) => !a.recipientIds.length || a.recipientIds.includes(this.currentUserId))
+          .sort((a, b) => {
+            const dateA = new Date(a.date.year, new Date(a.date.month + ' 1').getMonth(), a.date.day);
+            const dateB = new Date(b.date.year, new Date(b.date.month + ' 1').getMonth(), b.date.day);
+            return dateB - dateA;
+          });
+      } catch (error) {
+        console.error('Failed to load announcements:', error);
+        this.error = 'Could not load announcements';
+      } finally {
+        this.loading = false;
+      }
+    },
     getFileIcon(fileType) {
       const icons = {
         pdf: 'bi-file-earmark-pdf',
         word: 'bi-file-earmark-word',
         image: 'bi-file-image',
-        excel: 'bi-file-earmark-excel'
+        excel: 'bi-file-earmark-excel',
+      };
+      return icons[fileType] || 'bi-file-earmark-text';
+    },
+    changePage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
       }
-      return icons[fileType] || 'bi-file-earmark-text'
-    }
-  }
-}
+    },
+  },
+  mounted() {
+    this.fetchAnnouncements();
+  },
+};
 </script>
 
 <style scoped>
-/* Hero Section - Consistent with other pages */
+.formatted-content ul.list-unstyled {
+  padding-left: 20px;
+}
+
+.formatted-content ul.list-unstyled li {
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 10px;
+}
+
+.formatted-content ul.list-unstyled li::before {
+  content: '✔';
+  position: absolute;
+  left: 0;
+  color: #0d6efd;
+  font-weight: bold;
+}
+
+.formatted-content p.fw-bold {
+  color: #333;
+}
+
 .hero-section {
   background: linear-gradient(135deg, #1a3a8f 0%, #0d6efd 100%);
   position: relative;
@@ -278,16 +456,30 @@ export default {
   border: none;
 }
 
+/* Styles for formatted content */
+.formatted-content {
+  line-height: 1.6;
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+/* Ensure text-muted for fallback message is styled consistently */
+.text-muted {
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 767.98px) {
   .hero-section {
     text-align: center;
   }
-  
+
   .announcements-hero-img {
     margin-bottom: 2rem;
   }
-  
+
   .section-header h2 {
     font-size: 2rem;
   }

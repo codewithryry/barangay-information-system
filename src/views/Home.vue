@@ -129,102 +129,55 @@
       </div>
     </section>
 
-    <!-- Announcements with Tabs -->
-    <section class="announcements-section py-5 bg-white">
+    <!-- Resident Resources Section -->
+    <section class="resources-section py-5 bg-light">
       <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="h2 fw-bold text-dark mb-0">
-            <i class="fas fa-bullhorn text-danger me-2"></i> Latest Announcements
-          </h2>
-          <router-link 
-            to="/announcements" 
-            class="btn btn-sm btn-outline-primary rounded-pill"
-          >
-            View All <i class="fas fa-chevron-right ms-1"></i>
-          </router-link>
+        <div class="section-header text-center mb-5">
+          <h2 class="display-5 fw-bold text-dark mb-3">Resident Resources</h2>
+          <p class="text-muted mx-auto" style="max-width: 700px;">
+            Quick access to tools, forms, and information to support our community
+          </p>
         </div>
-        
-        <ul class="nav nav-tabs mb-4" id="announcementTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="memorandum-tab" data-bs-toggle="tab" data-bs-target="#memorandum" type="button" role="tab">
-              Memorandums
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="advisory-tab" data-bs-toggle="tab" data-bs-target="#advisory" type="button" role="tab">
-              Public Advisories
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="event-tab" data-bs-toggle="tab" data-bs-target="#event" type="button" role="tab">
-              Events
-            </button>
-          </li>
-        </ul>
-        
-        <div class="tab-content" id="announcementTabsContent">
-          <div class="tab-pane fade show active" id="memorandum" role="tabpanel">
-            <div class="row g-4">
-              <div class="col-md-6 col-lg-4" v-for="(memorandum, index) in memorandums" :key="'memorandum-'+index">
-                <div class="card announcement-card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
-                  <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                      <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill me-2">
-                        {{ memorandum.type }}
-                      </span>
-                      <small class="text-muted">{{ memorandum.date }}</small>
-                    </div>
-                    <h3 class="h5 fw-bold mb-3">{{ memorandum.title }}</h3>
-                    <p class="text-muted mb-3">{{ memorandum.description }}</p>
-                    <a href="#" class="text-decoration-none fw-bold small">
-                      Read Full Memo <i class="fas fa-arrow-right-short"></i>
-                    </a>
-                  </div>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4">
+            <div class="card resource-card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+              <div class="card-body p-4 text-center">
+                <div class="icon-wrapper bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-4">
+                  <i class="fas fa-download fs-3"></i>
                 </div>
+                <h3 class="h5 fw-bold mb-3">Downloadable Forms</h3>
+                <p class="text-muted mb-3">Access forms for clearances, permits, and more in PDF format.</p>
+                <a href="/assets/forms" class="btn btn-link text-primary text-decoration-none fw-bold p-0">
+                  Download Now <i class="fas fa-arrow-right ms-2"></i>
+                </a>
               </div>
             </div>
           </div>
-          
-          <div class="tab-pane fade" id="advisory" role="tabpanel">
-            <div class="row g-4">
-              <div class="col-md-6 col-lg-4" v-for="(advisory, index) in advisories" :key="'advisory-'+index">
-                <div class="card announcement-card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
-                  <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                      <span class="badge bg-info bg-opacity-10 text-info rounded-pill me-2">
-                        {{ advisory.type }}
-                      </span>
-                      <small class="text-muted">{{ advisory.date }}</small>
-                    </div>
-                    <h3 class="h5 fw-bold mb-3">{{ advisory.title }}</h3>
-                    <p class="text-muted mb-3">{{ advisory.description }}</p>
-                    <a href="#" class="text-decoration-none fw-bold small">
-                      Read Full Advisory <i class="fas fa-arrow-right-short"></i>
-                    </a>
-                  </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card resource-card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+              <div class="card-body p-4 text-center">
+                <div class="icon-wrapper bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-4">
+                  <i class="fas fa-phone-alt fs-3"></i>
                 </div>
+                <h3 class="h5 fw-bold mb-3">Emergency Contacts</h3>
+                <p class="text-muted mb-3">Key numbers for police, fire, medical, and barangay services.</p>
+                <router-link to="/contacts" class="btn btn-link text-success text-decoration-none fw-bold p-0">
+                  View Contacts <i class="fas fa-arrow-right ms-2"></i>
+                </router-link>
               </div>
             </div>
           </div>
-          
-          <div class="tab-pane fade" id="event" role="tabpanel">
-            <div class="row g-4">
-              <div class="col-md-6 col-lg-4" v-for="(event, index) in events" :key="'event-'+index">
-                <div class="card announcement-card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
-                  <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                      <span class="badge bg-success bg-opacity-10 text-success rounded-pill me-2">
-                        {{ event.type }}
-                      </span>
-                      <small class="text-muted">{{ event.date }}</small>
-                    </div>
-                    <h3 class="h5 fw-bold mb-3">{{ event.title }}</h3>
-                    <p class="text-muted mb-3">{{ event.description }}</p>
-                    <a href="#" class="text-decoration-none fw-bold small">
-                      View Details <i class="fas fa-arrow-right-short"></i>
-                    </a>
-                  </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card resource-card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+              <div class="card-body p-4 text-center">
+                <div class="icon-wrapper bg-info bg-opacity-10 text-info rounded-circle mx-auto mb-4">
+                  <i class="fas fa-question-circle fs-3"></i>
                 </div>
+                <h3 class="h5 fw-bold mb-3">FAQs</h3>
+                <p class="text-muted mb-3">Answers to common questions about barangay services.</p>
+                <router-link to="/faq" class="btn btn-link text-info text-decoration-none fw-bold p-0">
+                  Explore FAQs <i class="fas fa-arrow-right ms-2"></i>
+                </router-link>
               </div>
             </div>
           </div>
@@ -298,11 +251,9 @@
     </section>
 
     <!-- Add this at the bottom of your template, before the closing </div> -->
-<Chatbot />
-
+    <Chatbot />
   </div>
 </template>
-
 
 <script>
 import Chatbot from '@/components/Chatbot.vue';
@@ -312,71 +263,6 @@ export default {
   components: {
     Chatbot
   },
-
-  data() {
-    return {
-      memorandums: [
-        {
-          type: 'MEMORANDUM',
-          date: 'June 15, 2023',
-          title: 'Community Clean-up Drive Participation',
-          description: 'All households required to send representatives for monthly clean-up activities.'
-        },
-        {
-          type: 'MEMORANDUM',
-          date: 'June 10, 2023',
-          title: 'New Barangay Ordinance Implementation',
-          description: 'Ordinance No. 2023-002 regarding waste segregation takes effect immediately.'
-        },
-        {
-          type: 'MEMORANDUM',
-          date: 'June 5, 2023',
-          title: 'Barangay Assembly Meeting',
-          description: 'Quarterly barangay assembly scheduled for all residents.'
-        }
-      ],
-      advisories: [
-        {
-          type: 'ADVISORY',
-          date: 'June 12, 2023',
-          title: 'Free Vaccination Schedule',
-          description: 'Additional vaccination dates at barangay health center.'
-        },
-        {
-          type: 'ADVISORY',
-          date: 'June 8, 2023',
-          title: 'Water Interruption Notice',
-          description: 'Scheduled maintenance affecting some areas on June 15.'
-        },
-        {
-          type: 'ADVISORY',
-          date: 'June 1, 2023',
-          title: 'Traffic Re-routing',
-          description: 'Road construction affecting main barangay roads.'
-        }
-      ],
-      events: [
-        {
-          type: 'EVENT',
-          date: 'June 30, 2023',
-          title: 'Independence Day Celebration',
-          description: 'Community parade and cultural presentations.'
-        },
-        {
-          type: 'EVENT',
-          date: 'June 25, 2023',
-          title: 'Youth Sports Festival',
-          description: 'Annual inter-purok basketball tournament.'
-        },
-        {
-          type: 'EVENT',
-          date: 'June 20, 2023',
-          title: 'Senior Citizens Day',
-          description: 'Health check-ups and social activities for elders.'
-        }
-      ]
-    }
-  }
 }
 </script>
 
@@ -448,23 +334,31 @@ export default {
   justify-content: center;
 }
 
-/* Announcement cards */
-.announcement-card {
-  transition: transform 0.3s ease;
+/* News cards */
+.news-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.announcement-card:hover {
-  transform: translateY(-3px);
+.news-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+.news-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(26, 58, 143, 0.2) 100%);
+  z-index: 1;
 }
 
-/* Stats section */
-.stats-section {
-  background: linear-gradient(135deg, #0d6efd 0%, #1a3a8f 100%);
+/* Resource cards */
+.resource-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.stat-item {
-  padding: 1.5rem;
-  background: rgba(255,255,255,0.1);
-  border-radius: 10px;
-  backdrop-filter: blur(5px);
+.resource-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
 }
 
 /* Contact section */
@@ -483,6 +377,9 @@ export default {
   }
   .display-4 {
     font-size: 2.5rem;
+  }
+  .news-section, .resources-section {
+    padding: 3rem 0;
   }
 }
 </style>
