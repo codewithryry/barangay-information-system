@@ -72,8 +72,27 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     redirect: '/404'
-  }
+  },
+
+  {
+  path: '/id/:residentId',
+  name: 'id-generator',
+  component: () => import('@/components/IDGenerator.vue'),
+  meta: { requiresAuth: true }
+},
+{
+  path: '/verify',
+  name: 'verify',
+  component: () => import('@/components/VerificationPage.vue')
+},
+{
+  path: '/verify/:idNumber',
+  name: 'verify-id',
+  component: () => import('@/components/VerificationPage.vue')
+}
+
 ];
+
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
