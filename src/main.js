@@ -8,8 +8,7 @@ import { db } from '@/firebase/config';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle.min.js' 
+
 
 // Font Awesome Setup
 import { library } from '@fortawesome/fontawesome-svg-core';
