@@ -1,7 +1,8 @@
-
 <template>
   <div class="profile-container">
     <!-- Profile Header -->
+           <br>
+      <br>
     <div class="profile-header">
       <div class="header-content">
         <h1 class="profile-title">My Profile</h1>
@@ -29,11 +30,6 @@
             <div class="profile-info">
               <h2 class="profile-name">{{ profile.name || 'Not Provided' }}</h2>
               <p class="profile-email">{{ profile.email || 'Not Provided' }}</p>
-              <div class="profile-status">
-                <span class="status-badge" :class="profile.status || 'inactive'">
-                  {{ profile.status || 'Inactive' }}
-                </span>
-              </div>
             </div>
           </div>
 
@@ -116,7 +112,8 @@
           </form>
         </div>
 
-        <!-- ID Card Section -->
+
+       <!-- Enhanced ID Card Section -->
         <div v-if="profile && profile.role === 'resident'" class="id-card-section">
           <div class="section-header">
             <h3><i class="fas fa-id-card"></i> Barangay ID</h3>
@@ -131,102 +128,124 @@
             </button>
           </div>
 
-          <div v-if="profile.residentId" class="id-card-wrapper">
-            <div class="id-card">
-              <div class="id-header">
-                <div class="bis-logo">
-                  <img src="@/assets/bis-logo.png" alt="BIS Logo">
+          <div class="id-card-container">
+            <div v-if="profile.residentId" class="id-card-wrapper">
+              <div class="id-card-stack">
+                <!-- Front ID Card -->
+                <div class="id-card front-card">
+                <div class="id-header">
+                  <div>
+                  </div>
+                  <div class="id-title">
+                    <p class="id-subtitle">RESIDENT IDENTIFICATION CARD</p>
+                  </div>
+                  <div >
+                  </div>
                 </div>
-                <div class="id-title">
-                  <h4>Republic of the Philippines</h4>
-                  <p>BARANGAY {{ profile.barangayName || '[BARANGAY NAME]' }}</p>
-                  <p class="id-subtitle">BARANGAY IDENTIFICATION CARD</p>
+                <div class="id-body">
+                  <div class="id-left">
+                    <div class="id-photo">
+                      <div class="photo-frame">
+                        <img :src="profile.photoURL || 'https://via.placeholder.com/120x150'" alt="ID Photo">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="id-right">
+                    <div class="detail-row id-number">
+                      <span class="label">ID No:</span>
+                      <strong><b>{{ profile.residentId }}</b></strong>
+                    </div>
+                    <div class="detail-row">
+                      <span class="label">Full Name:</span>
+                      <strong>{{ profile.name || 'N/A' }}</strong>
+                    </div>
+                    <div class="detail-row">
+                      <span class="label">Birthdate:</span>
+                      <strong>{{ formatDate(profile.birthdate) }}</strong>
+                    </div>
+                    <div class="detail-row">
+                      <span class="label">Gender:</span>
+                      <strong>{{ capitalize(profile.gender) || 'N/A' }}</strong>
+                    </div>
+                                        <div class="detail-row">
+                      <span class="label">Valid Until:</span>
+                      <strong>{{ formatDate(profile.idExpiresAt, 'MM/DD/YYYY') }}</strong>
+                    </div>
+         
+                    <div class="detail-row address-row">
+                      <span class="label">Address:</span>
+                      <strong>{{ profile.address || 'N/A' }}</strong>
+                    </div>
+                  </div>
                 </div>
-                <div class="philippine-seal">
-                  <img src="@/assets/ph-seal.png" alt="Philippine Seal">
+                <div class="id-footer">
+                  <div class="footer-notice">
+                   
+                  </div>
                 </div>
               </div>
 
-              <div class="id-body">
-                <div class="id-photo">
-                  <img :src="profile.photoURL || require('@/assets/avatar.jpg')" alt="ID Photo" class="photo-frame">
-                  <div class="lamination-effect"></div>
-                  <strong>{{ profile.name || 'N/A' }}</strong>
-                  <div class="photo-signature">Authorized Signature</div>
+              <!-- Back ID Card -->
+              <div class="id-card back-card">
+               <div class="back-header">
+                  <h4></h4>
+                  <p>BARANGAY IDENTIFICATION CARD</p>
                 </div>
-                <div class="id-details">
-                  <div class="detail-row id-number">
-                    <span class="label">ID No:</span>
-                    <strong>{{ profile.residentId }}</strong>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Birthdate:</span>
-                    <strong>{{ formatDate(profile.birthdate) }}</strong>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Gender:</span>
-                    <strong>{{ capitalize(profile.gender) || 'N/A' }}</strong>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Civil Status:</span>
-                    <strong>{{ capitalize(profile.civilStatus) || 'N/A' }}</strong>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Address:</span>
-                    <strong>{{ profile.address || 'N/A' }}</strong>
+                <div class="back-body">
+                  <div class="terms-section">
+                    <h5>TERMS AND CONDITIONS</h5>
+                    <ol class="terms-list">
+                      <li>This ID is property of the Barangay and must be surrendered upon request.</li>
+                      <li>Report lost or stolen IDs immediately to the Barangay Office.</li>
+                      <li>Present this ID when availing of Barangay services.</li>
+                      <li>Valid for one year from date of issue unless otherwise specified.</li>
+                    </ol>
                   </div>
                 </div>
-                <div class="id-qr">
-                  <div class="qr-container">
-                    <qr-code :text="qrCodeText" :size="80"></qr-code>
-                    <div class="holographic-overlay"></div>
+                <div class="id-footer">
+                  <div class="footer-notice">
+                    <p>This ID is non-transferable and remains property of {{ profile.barangayName || 'Barangay' }}</p>
                   </div>
-                  <p class="qr-text">SCAN TO VERIFY</p>
-                </div>
-              </div>
-
-              <div class="id-footer">
-                <div class="signature">
-                  <div class="signature-line"></div>
-                  <p>BARANGAY CAPTAIN</p>
-                </div>
-                <div class="validity-stamp">
-                  <p>VALID UNTIL: {{ formatDate(profile.idExpiresAt, 'MM/DD/YYYY') }}</p>
                 </div>
               </div>
             </div>
 
-            <div class="id-actions">
-              <button @click="printID" class="action-button print-button">
-                <i class="fas fa-print"></i> Print
-              </button>
-              <button @click="downloadID" class="action-button download-button">
-                <i class="fas fa-download"></i> Download
-              </button>
-              <button @click="verifyID" class="action-button verify-button">
-                <i class="fas fa-qrcode"></i> Verify
+              <div class="id-actions">
+                <button @click="printID" class="action-button print-button">
+                  <i class="fas fa-print"></i> Print ID
+                </button>
+                <button @click="downloadID" class="action-button download-button">
+                  <i class="fas fa-file-pdf"></i> Save as PDF
+                </button>
+                <button @click="verifyID" class="action-button verify-button">
+                  <i class="fas fa-qrcode"></i> Verify Online
+                </button>
+              </div>
+            </div>
+        
+
+            <div v-else-if="!profile.residentId" class="no-id-message">
+              <div class="no-id-icon">
+                <i class="fas fa-id-card-alt"></i>
+              </div>
+              <h4>No Barangay ID Generated</h4>
+              <p v-if="!canGenerateID" class="requirements">
+                Please complete your profile information to generate your Barangay ID
+              </p>
+              <button 
+                v-if="canGenerateID" 
+                @click="generateID" 
+                class="generate-id-button primary"
+                :disabled="generatingID"
+              >
+                <i class="fas fa-id-card"></i> 
+                {{ generatingID ? 'Generating...' : 'Generate My ID Now' }}
               </button>
             </div>
-          </div>
-
-          <div v-else-if="!profile.residentId" class="no-id-message">
-            <i class="fas fa-id-card-alt"></i>
-            <p>No Barangay ID has been generated yet.</p>
-            <p v-if="!canGenerateID" class="requirements">
-              Complete your profile information to generate an ID.
-            </p>
           </div>
         </div>
-
-        <!-- Status Message -->
-        <transition name="fade">
-          <div v-if="message" :class="`status-message ${messageType}`">
-            <i :class="messageIcon"></i>
-            <span>{{ message }}</span>
-          </div>
-        </transition>
-      </div>
     </div>
+  </div>
   </div>
 </template>
 
@@ -260,7 +279,7 @@ export default {
       generatingID: false,
       qrCodeText: '',
       profileDetails: [],
-      currentDate: new Date('2025-06-03T02:58:00-07:00') // 02:58 AM PST, June 03, 2025
+      currentDate: new Date('2025-06-03T10:15:00-07:00') // 10:15 AM PST, June 03, 2025
     }
   },
   computed: {
@@ -294,7 +313,7 @@ export default {
         const docSnap = await getDoc(docRef)
         
         if (docSnap.exists()) {
-          this.profile = docSnap.data()
+          this.profile = { ...docSnap.data(), email: user.email }
           this.editProfile = {
             name: this.profile.name || '',
             address: this.profile.address || '',
@@ -311,7 +330,24 @@ export default {
 
           this.updateProfileDetails()
         } else {
-          throw new Error('Profile not found')
+          // Initialize new profile with createdAt
+          this.profile = {
+            email: user.email,
+            role: 'resident',
+            status: 'inactive',
+            createdAt: this.currentDate
+          }
+          await setDoc(docRef, this.profile)
+          this.editProfile = {
+            name: '',
+            address: '',
+            birthdate: '',
+            contact: '',
+            gender: '',
+            civilStatus: '',
+            barangayName: ''
+          }
+          this.updateProfileDetails()
         }
       } catch (error) {
         this.showMessage('Error loading profile: ' + error.message, 'error')
@@ -347,7 +383,7 @@ export default {
         {
           icon: 'fas fa-calendar-check',
           label: 'Member Since',
-          value: this.formatDate(this.profile.createdAt) || 'June 03, 2025'
+          value: this.formatDate(this.profile.createdAt) || 'Not provided'
         },
         {
           icon: 'fas fa-map',
@@ -363,7 +399,7 @@ export default {
         
         const docRef = doc(db, 'users', user.uid)
         
-        await updateDoc(docRef, {
+        const updatedProfile = {
           name: this.editProfile.name,
           address: this.editProfile.address,
           birthdate: this.editProfile.birthdate,
@@ -371,12 +407,16 @@ export default {
           gender: this.editProfile.gender,
           civilStatus: this.editProfile.civilStatus,
           barangayName: this.editProfile.barangayName,
-          updatedAt: this.currentDate
-        })
+          updatedAt: this.currentDate,
+          status: this.canGenerateID ? 'active' : 'inactive'
+        }
+        
+        await updateDoc(docRef, updatedProfile)
+        this.profile = { ...this.profile, ...updatedProfile }
         
         this.showMessage('Profile updated successfully!', 'success')
         this.editMode = false
-        await this.fetchProfile()
+        this.updateProfileDetails()
       } catch (error) {
         this.showMessage('Error updating profile: ' + error.message, 'error')
       }
@@ -395,15 +435,20 @@ export default {
         expiresAt.setFullYear(expiresAt.getFullYear() + 1)
         
         const user = this.$store.state.auth.user
+        if (!user) throw new Error('User not authenticated')
+        
         const docRef = doc(db, 'users', user.uid)
         
-        await updateDoc(docRef, {
+        const idData = {
           residentId: idNumber,
           issuedAt: this.currentDate,
           idExpiresAt: expiresAt,
           status: 'active',
           updatedAt: this.currentDate
-        })
+        }
+        
+        await updateDoc(docRef, idData)
+        this.profile = { ...this.profile, ...idData }
         
         const idIssuanceRef = doc(db, 'id_issuance', idNumber)
         await setDoc(idIssuanceRef, {
@@ -413,8 +458,9 @@ export default {
           status: 'active'
         })
         
+        this.qrCodeText = `BRGYID:${idNumber}|VERIFY:${window.location.origin}/verify/${idNumber}`
         this.showMessage('Barangay ID generated successfully!', 'success')
-        await this.fetchProfile()
+        this.updateProfileDetails()
       } catch (error) {
         console.error('Error generating ID:', error)
         this.showMessage('Failed to generate ID: ' + error.message, 'error')
@@ -424,8 +470,10 @@ export default {
     },
     async printID() {
       try {
-        const element = document.querySelector('.id-card')
+        const element = document.querySelector('.front-card')
         if (!element) throw new Error('ID card element not found')
+        
+        element.style.setProperty('--front-label-display', 'none')
         
         const canvas = await html2canvas(element, {
           scale: 3,
@@ -433,6 +481,8 @@ export default {
           useCORS: true,
           backgroundColor: '#ffffff'
         })
+        
+        element.style.removeProperty('--front-label-display')
         
         const link = document.createElement('a')
         link.download = `Barangay-ID-${this.profile.residentId}.png`
@@ -444,18 +494,32 @@ export default {
     },
     async downloadID() {
       try {
-        const element = document.querySelector('.id-card')
-        if (!element) throw new Error('ID card element not found')
-        
-        const canvas = await html2canvas(element, {
-          scale: 3,
-          logging: false,
-          useCORS: true,
-          backgroundColor: '#ffffff'
-        })
+        const elements = document.querySelectorAll('.id-card')
+        if (!elements.length) throw new Error('ID card element not found')
         
         const pdf = new jsPDF('l', 'mm', [86, 54])
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 86, 54)
+        
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i]
+          const labelType = element.classList.contains('front-card') ? 'front' : 'back'
+          element.style.setProperty(`--${labelType}-label-display`, 'none')
+          
+          const canvas = await html2canvas(element, {
+            scale: 3,
+            logging: false,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+          })
+          
+          element.style.removeProperty(`--${labelType}-label-display`)
+          
+          const imgData = canvas.toDataURL('image/png')
+          pdf.addImage(imgData, 'PNG', 0, 0, 86, 54)
+          if (i < elements.length - 1) {
+            pdf.addPage([86, 54], 'l')
+          }
+        }
+        
         pdf.save(`Barangay-ID-${this.profile.residentId}.pdf`)
       } catch (error) {
         this.showMessage('Error generating PDF: ' + error.message, 'error')
@@ -470,7 +534,8 @@ export default {
     },
     formatDate(date, format = 'long') {
       if (!date) return 'N/A'
-      const dateObj = date.toDate ? date.toDate() : new Date(date)
+      const dateObj = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date)
+      if (isNaN(dateObj.getTime())) return 'N/A'
       
       if (format === 'MM/DD/YYYY') {
         return dateObj.toLocaleDateString('en-US', {
@@ -505,11 +570,11 @@ export default {
 .profile-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif; /* Updated to a modern sans-serif font */
 }
 
 .profile-header {
-  background: linear-gradient(to right, #004aad, #0066cc);
+  background: linear-gradient(to right, #1e3a8a, #3b82f6);
   color: white;
   padding: 3rem 2rem;
   position: relative;
@@ -566,7 +631,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #004aad;
+  background: #1e3a8a;
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1.25rem;
@@ -578,7 +643,7 @@ export default {
 }
 
 .edit-button:hover {
-  background: #00397a;
+  background: #172554;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -603,7 +668,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #004aad;
+  color: #1e3a8a;
   border: 3px solid white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -688,7 +753,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #004aad;
+  color: #1e3a8a;
   font-size: 1.25rem;
 }
 
@@ -748,8 +813,8 @@ export default {
 
 .form-input:focus {
   outline: none;
-  border-color: #004aad;
-  box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.2);
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
 }
 
 .form-input:disabled {
@@ -787,7 +852,7 @@ export default {
 }
 
 .save-button {
-  background: #004aad;
+  background: #1e3a8a;
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1.5rem;
@@ -799,375 +864,419 @@ export default {
 }
 
 .save-button:hover {
-  background: #00397a;
+  background: #172554;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.id-card-section {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.section-header h3 {
-  font-size: 1.25rem;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-}
-
-.generate-id-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #10b981;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.generate-id-button:hover:not(:disabled) {
-  background: #059669;
-  transform: translateY(-1px);
-}
-
-.generate-id-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.id-card-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 10px;
-}
-
 .id-card {
-  width: 86mm;
-  height: 54mm;
-  background: #f5f5f5;
-  border-radius: 8px;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  aspect-ratio: 86/54;
+  background: white;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-  font-family: 'Helvetica Neue', sans-serif;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  font-family: 'Inter', sans-serif;
   position: relative;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #ddd;
+  border: 2px solid #e2e8f0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path fill="none" stroke="rgba(30,58,138,0.1)" stroke-width="0.5" d="M0,50a50,50 0 1,0 100,0a50,50 0 1,0 -100,0M50,0a50,50 0 1,0 0,100a50,50 0 1,0 0,-100" /></svg>');
+  background-size: 20px 20px;
+}
+
+.front-card {
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.front-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.2) 0%, transparent 50%);
+  opacity: 0.5;
+}
+
+.back-card {
+  background: #f8fafc;
+  position: relative;
+  overflow: hidden;
+}
+
+.back-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.2) 0%, transparent 50%);
+  opacity: 0.5;
 }
 
 .id-header {
-  background: #004aad;
+  background: linear-gradient(to right, #1e3a8a, #3b82f6);
   color: white;
-  padding: 3px 5px;
+  padding: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 18%;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.id-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 60%
+  );
+  animation: shimmer 3s infinite;
+}
+
+.official-seal {
+  width: 50px;
+  height: 50px;
+  border: 2px solid white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 18%;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  position: relative;
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.2rem;
+  background: radial-gradient(circle, #ffffff 10%, transparent 60%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.bis-logo {
-  width: 18mm;
-  height: 11mm;
-  display: flex;
-  align-items: center;
-  position: absolute;
-  left: 5px;
-}
-
-.bis-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.seal-text {
+  transform: rotate(-15deg);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .id-title {
   flex: 1;
   text-align: center;
-  padding: 0 5px;
+  padding: 0 0.5rem;
 }
 
 .id-title h4 {
   margin: 0;
-  font-size: 8px;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .id-title p {
-  margin: 2px 0 0;
-  font-size: 7px;
+  margin: 0.15rem 0 0;
+  font-size: 0.65rem;
   font-weight: 500;
   text-transform: uppercase;
 }
 
 .id-title .id-subtitle {
-  margin: 2px 0 0;
-  font-size: 9px;
+  margin: 0.25rem 0 0;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.philippine-seal {
-  width: 11mm;
-  height: 11mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  right: 5px;
-}
-
-.philippine-seal img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.qr-mini {
+  width: 32px;
+  height: 32px;
+  background: white;
+  padding: 3px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .id-body {
   display: flex;
-  padding: 4px 6px;
-  height: 68%;
-  gap: 4px;
-  background: white;
+  padding: 0.6rem;
+  height: 72%;
 }
 
-.id-photo {
-  flex: 0 0 18mm;
-  position: relative;
+.id-left {
+  flex: 0 0 40%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-right: 0.6rem;
+  border-right: 1px dashed #d1d5db;
 }
 
-.id-photo .photo-frame {
-  width: 18mm;
-  height: 18mm;
-  border-radius: 3px;
-  object-fit: cover;
-  object-position: center;
-  border: 1px solid #ddd;
-}
-
-.id-photo .photo-signature {
-  font-size: 0.5rem;
-  margin-top: 1px;
-  text-align: center;
-  font-style: italic;
-  color: #666;
-}
-
-.id-details {
-  flex: 1;
+.id-photo {
+  width: 85%;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px;
-  background: white;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.photo-frame {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid #d1d5db;
+  background: #f8fafc;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.photo-frame img {
+  width: 50%;
+  height: 50%;
+  object-fit: cover;
+}
+
+.signature-line {
+  width: 80%;
+  height: 1px;
+  background: #1e293b;
+  margin: 0.3rem 0;
+}
+
+.signature-text {
+  font-size: 0.55rem;
+  font-style: italic;
+  color: #475569;
+  font-weight: 500;
+}
+
+.blood-type {
+  width: 100%;
+  padding: 0.3rem;
+  background: #fef2f2;
   border-radius: 4px;
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #b91c1c;
+  border: 1px solid #fee2e2;
+}
+
+.id-right {
+  flex: 1;
+  padding-left: 0.6rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-row {
   display: flex;
-  gap: 4px;
-  align-items: flex-start;
-  line-height: 1.2;
-  font-size: 0.6rem;
+  margin-bottom: 0.3rem;
+  line-height: 1.3;
 }
 
 .detail-row.id-number {
-  font-size: 0.95rem;
-  font-weight: 900;
-  color: #004aad;
-  margin-bottom: 4px;
-  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 0.4rem;
+  justify-content: center;
+  background: #e6f0ff;
+  padding: 0.0rem;
+  border-radius: 4px;
+
 }
 
 .detail-row .label {
-  color: #666;
-  width: 60px;
+  color: #475569;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
+  min-width: 70px;
 }
 
 .detail-row strong {
-  color: #333;
+  color: #1e293b;
   font-weight: 500;
+  font-size: 0.7rem;
   flex: 1;
+}
+
+.address-row strong {
   word-break: break-word;
-  max-width: 100%;
-  font-size: 0.8rem;
 }
 
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px 6px;
-  flex: 1;
-}
-
-.detail-row.address-row {
-  grid-column: 1 / -1;
-}
-
-.id-qr {
-  flex: 0 0 18mm;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.qr-container {
-  position: relative;
-  padding: 2px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-}
-
-.qr-text {
-  font-size: 0.5rem;
-  font-weight: bold;
-  margin: 0;
-  text-align: center;
-  color: #333;
+.issued-date {
+  margin-top: auto;
+  font-size: 0.55rem;
+  color: #475569;
+  text-align: right;
+  padding-right: 0.5rem;
 }
 
 .id-footer {
-  height: 14%;
-  padding: 3px 6px;
-  background: #f0f0f0;
+  height: 10%;
+  padding: 0.4rem 0.6rem;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.footer-notice {
+  font-size: 0.5rem;
+  color: #475569;
+  text-align: center;
+  margin: 0;
+  font-weight: 500;
+}
+
+.holographic-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.4),
+    rgba(0, 255, 0, 0.4),
+    rgba(0, 0, 255, 0.4),
+    rgba(255, 0, 255, 0.4)
+  );
+  animation: shimmer 5s infinite;
+}
+
+/* Back ID Card Styles */
+.back-header {
+  background: linear-gradient(to right, #1e3a8a, #3b82f6);
+  color: white;
+  padding: 0.5rem;
+  text-align: center;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.back-header h4 {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.back-header p {
+  margin: 0.15rem 0 0;
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.back-body {
+  padding: 0.6rem;
+  height: 72%;
+  display: flex;
+  flex-direction: column;
+}
+
+.terms-section {
+  margin-bottom: 0.6rem;
+}
+
+.terms-section h5 {
+  margin: 0 0 0.4rem;
+  font-size: 0.65rem;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.terms-list {
+  padding-left: 0.9rem;
+  margin: 0;
+  font-size: 0.55rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.terms-list li {
+  margin-bottom: 0.3rem;
+}
+
+.contact-section {
+  margin-bottom: 0.6rem;
+}
+
+.contact-section h5 {
+  margin: 0 0 0.4rem;
+  font-size: 0.65rem;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.contact-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.55rem;
+  margin-bottom: 0.2rem;
+}
+
+.contact-row span {
+  color: #475569;
+  font-weight: 500;
+}
+
+.contact-row strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.qr-large {
+  align-self: center;
+  margin-top: auto;
+  text-align: center;
+}
+
+.qr-large .qr-notice {
+  margin: 0.3rem 0 0;
+  font-size: 0.55rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.back-footer {
+  height: 10%;
+  padding: 0.4rem 0.6rem;
+  background: #f8fafc;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #ddd;
+  border-top: 2px solid #e2e8f0;
+  font-size: 0.55rem;
+  color: #475569;
 }
 
-.signature {
-  text-align: center;
-  flex: 1;
-}
-
-.signature-line {
-  width: 40mm;
-  height: 1px;
-  background: #999;
-  margin: 0 auto 1px;
-}
-
-.signature p {
-  margin: 0;
-  font-size: 0.6rem;
-  color: #333;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.validity-stamp {
-  text-align: right;
-}
-
-.validity-stamp p {
-  margin: 0;
-  font-size: 0.6rem;
-  color: #333;
-  font-weight: 700;
-}
-
-.id-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-
-.action-button {
+.barcode {
   display: flex;
   align-items: center;
-  gap: 4px;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  height: 100%;
 }
 
-.print-button {
-  background: #e6f0ff;
-  color: #004aad;
-}
-
-.print-button:hover {
-  background: #c3daff;
-}
-
-.download-button {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.download-button:hover {
-  background: #bbf7d0;
-}
-
-.verify-button {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-
-.verify-button:hover {
-  background: #ddd6fe;
-}
-
-.no-id-message {
-  text-align: center;
-  padding: 1.5rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  color: #6b7280;
-}
-
-.no-id-message i {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-  color: #d1d5db;
-}
-
-.no-id-message p {
-  margin: 0.5rem 0;
-}
-
-.requirements {
-  font-size: 0.85rem;
-  color: #9ca3af;
+.barcode-line {
+  width: 2px;
+  margin-right: 1.5px;
+  background: #1e293b;
+  border-radius: 1px;
 }
 
 .status-message {
@@ -1196,8 +1305,8 @@ export default {
 
 .status-message.info {
   background: #e6f0ff;
-  color: #004aad;
-  border: 1px solid #c3daff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
 }
 
 .fade-enter-active, .fade-leave-active {
@@ -1218,64 +1327,16 @@ export default {
   }
 }
 
-/* Carbon Copy Effect */
-.carbon-copy {
-  position: relative;
-  background: white;
-  border: 1px solid #ddd;
-  box-shadow: 0 0 0 1px #fff, 0 0 0 2px #ddd, 0 0 5px rgba(0,0,0,0.1);
-}
-
-.carbon-copy::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  right: 2px;
-  bottom: 2px;
-  border: 1px dashed rgba(0,0,0,0.1);
-  pointer-events: none;
-}
-
-.carbon-copy::after {
-  content: "COPY";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-45deg);
-  font-size: 3rem;
-  font-weight: bold;
-  color: rgba(0,0,0,0.05);
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* Original ID Card Styling */
-.original-id {
-  position: relative;
-  background: white;
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.original-id::before {
-  content: "ORIGINAL";
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  font-size: 0.6rem;
-  font-weight: bold;
-  color: #004aad;
-  background: rgba(0,74,173,0.1);
-  padding: 2px 5px;
-  border-radius: 3px;
-}
-
-.id-card-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @media (max-width: 768px) {
@@ -1303,8 +1364,7 @@ export default {
   }
   
   .id-card {
-    transform: scale(0.8);
-    transform-origin: center;
+    max-width: 300px;
   }
   
   .id-actions {
@@ -1346,8 +1406,246 @@ export default {
   }
   
   .id-card {
-    transform: scale(0.6);
+    max-width: 100%;
+  }
+  
+  .id-body {
+    flex-direction: column;
+    height: auto;
+    padding-bottom: 3.5rem;
+  }
+  
+  .id-left {
+    padding-right: 0;
+    margin-bottom: 0.4rem;
+  }
+  
+  .id-right {
+    padding-left: 0;
+  }
+  
+  .photo-frame {
+    max-width: 50px;
   }
 }
 </style>
+<style scoped>
+/* ... (keep previous styles the same until the ID card section) ... */
 
+/* ID Card Section */
+.id-card-section {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-header h3 i {
+  color: #3b82f6;
+}
+
+.id-card-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.id-card-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.id-card-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  perspective: 1000px;
+}
+
+.id-card {
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.id-card:hover {
+  transform: rotateY(10deg);
+}
+
+.id-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  font-size: 0.9rem;
+}
+
+.action-button i {
+  font-size: 1rem;
+}
+
+.print-button {
+  background: linear-gradient(to right, #3b82f6, #1e40af);
+  color: white;
+}
+
+.print-button:hover {
+  background: linear-gradient(to right, #2563eb, #1e3a8a);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(30, 64, 175, 0.3);
+}
+
+.download-button {
+  background: linear-gradient(to right, #ef4444, #b91c1c);
+  color: white;
+}
+
+.download-button:hover {
+  background: linear-gradient(to right, #dc2626, #991b1b);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(185, 28, 28, 0.3);
+}
+
+.verify-button {
+  background: linear-gradient(to right, #10b981, #047857);
+  color: white;
+}
+
+.verify-button:hover {
+  background: linear-gradient(to right, #059669, #065f46);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(4, 120, 87, 0.3);
+}
+
+.generate-id-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  background: linear-gradient(to right, #8b5cf6, #6d28d9);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.generate-id-button:hover:not(:disabled) {
+  background: linear-gradient(to right, #7c3aed, #5b21b6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(109, 40, 217, 0.3);
+}
+
+.generate-id-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.generate-id-button.primary {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  background: linear-gradient(to right, #8b5cf6, #6d28d9);
+}
+
+.no-id-message {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  max-width: 500px;
+  margin: 0 auto;
+  border: 1px dashed #cbd5e1;
+}
+
+.no-id-icon {
+  font-size: 3rem;
+  color: #8b5cf6;
+  margin-bottom: 1rem;
+}
+
+.no-id-message h4 {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.no-id-message p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.requirements {
+  color: #ef4444 !important;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .id-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .id-card-stack {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .id-card-section {
+    padding: 1rem;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .generate-id-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>

@@ -18,19 +18,19 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto align-items-lg-center">
-          <li class="nav-item mx-lg-1">
+          <!-- <li class="nav-item mx-lg-1">
             <router-link class="nav-link position-relative" active-class="active" to="/sk/dashboard">
               <i class="me-1"></i> Dashboard
             </router-link>
-          </li>
-          <li class="nav-item mx-lg-1">
-            <router-link class="nav-link" active-class="active" to="/sk/projects">
-              <i class=" me-1"></i> Projects
+          </li> -->
+            <li class="nav-item mx-lg-1">
+            <router-link class="nav-link" active-class="active" to="/sk/members">
+              <i class=" me-1"></i> Members
             </router-link>
           </li>
           <li class="nav-item mx-lg-1">
-            <router-link class="nav-link" active-class="active" to="/sk/members">
-              <i class=" me-1"></i> Members
+            <router-link class="nav-link" active-class="active" to="/sk/forum">
+              <i class=" me-1"></i> Forum
             </router-link>
           </li>
           <li class="nav-item ms-lg-2">

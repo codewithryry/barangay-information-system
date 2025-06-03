@@ -57,7 +57,7 @@ const routes = [
 
   // SK Official routes
   { path: '/sk/dashboard', name: 'sk-dashboard', component: SKDashboard, meta: { requiresAuth: true, allowedRoles: ['sk'], title: 'SK Dashboard' } },
-  { path: '/sk/projects', name: 'sk-projects', component: SKProjects, meta: { requiresAuth: true, allowedRoles: ['sk'], title: 'SK Projects' } },
+  { path: '/sk/forum', name: 'sk-forum', component: SKProjects, meta: { requiresAuth: true, allowedRoles: ['sk'], title: 'SK forum' } },
   { path: '/sk/members', name: 'sk-member', component: SKMember, meta: { requiresAuth: true, allowedRoles: ['sk'], title: 'SK Member' } },
 
   // Admin routes

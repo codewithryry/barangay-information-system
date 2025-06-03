@@ -1,117 +1,103 @@
 <template>
-  <div class="sk-members container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h2 class="fw-bold text-success mb-2">
-          <i class=" me-2"></i>SK Members
-        </h2>
-        <p class="text-muted">Manage your Sangguniang Kabataan members and officials</p>
+  <div class="sk-members-container">
+    <!-- Header Section -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="page-title">
+          SK Members
+        </h1>
+        <p>Manage your Sangguniang Kabataan members and officials</p>
       </div>
-      <button class="btn btn-success" @click.stop="showAddMemberModal" aria-label="Add new member">
-        <i class="fas fa-plus-circle me-1"></i> Add Member
+      <button class="add-member-btn" @click.stop="showAddMemberModal" aria-label="Add new member">
+        <i class="fas fa-plus"></i>
+        <span>Add Member</span>
       </button>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0">
-            <i class="fas fa-search"></i>
-          </span>
-          <input
-            type="text"
-            class="form-control border-start-0"
-            placeholder="Search members..."
-            v-model="searchQuery"
-            aria-label="Search members"
-          >
-        </div>
+    <!-- Controls Section -->
+    <div class="controls-section">
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search members..."
+          v-model="searchQuery"
+          aria-label="Search members"
+        >
       </div>
-      <div class="col-md-6">
-        <div class="d-flex justify-content-end">
-          <div class="btn-group" role="group" aria-label="Filter members">
-            <button
-              v-for="filter in filters"
-              :key="filter.value"
-              @click.stop="activeFilter = filter.value"
-              :class="['btn', activeFilter === filter.value ? 'btn-success' : 'btn-outline-secondary']"
-              :aria-pressed="activeFilter === filter.value"
-            >
-              {{ filter.label }}
-            </button>
-          </div>
-        </div>
+      
+      <div class="filter-tabs">
+        <button
+          v-for="filter in filters"
+          :key="filter.value"
+          @click.stop="activeFilter = filter.value"
+          :class="['filter-tab', { 'active': activeFilter === filter.value }]"
+          :aria-pressed="activeFilter === filter.value"
+        >
+          {{ filter.label }}
+        </button>
       </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
+    <!-- Members Table -->
+    <div class="members-table-container">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
+        <table class="members-table">
+          <thead>
             <tr>
-              <th scope="col" class="ps-4">Member</th>
-              <th scope="col">Position</th>
-              <th scope="col">Contact</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="text-end pe-4">Actions</th>
+              <th class="member-column">Member</th>
+              <th class="position-column">Position</th>
+              <th class="contact-column">Contact</th>
+              <th class="actions-column">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="member in filteredMembers" :key="member.id">
-              <td class="ps-4">
-                <div class="d-flex align-items-center">
-                  <div class="member-avatar me-3">
-                    <img :src="member.avatar" :alt="member.name" class="rounded-circle">
-                  </div>
-                  <div>
-                    <h6 class="mb-0">{{ member.name }}</h6>
-                    <small class="text-muted">{{ member.age }} years old</small>
+            <tr v-for="member in filteredMembers" :key="member.id" class="member-row">
+              <td class="member-cell">
+                <div class="member-info">
+                  <div class="member-details">
+                    <h3 class="member-name">{{ member.name }}</h3>
+                    <p class="member-age">{{ member.age }} years old</p>
                   </div>
                 </div>
               </td>
-              <td>
-                <span class="badge" :class="positionBadgeClass(member.position)">
+              <td class="position-cell">
+                <span class="position-badge" :class="positionBadgeClass(member.position)">
                   {{ member.position }}
                 </span>
               </td>
-              <td>
-                <small class="text-muted">
-                  <i class="fas fa-phone-alt me-1"></i> {{ member.contact }}<br>
-                  <i class="fas fa-envelope me-1"></i> {{ member.email }}
-                </small>
+              <td class="contact-cell">
+                <div class="contact-info">
+                  <p class="contact-item">
+                    <i class="fas fa-phone-alt"></i>
+                    {{ member.contact }}
+                  </p>
+                  <p class="contact-item" v-if="member.email">
+                    <i class="fas fa-envelope"></i>
+                    {{ member.email }}
+                  </p>
+                </div>
               </td>
-              <td>
-                <span class="badge" :class="statusBadgeClass(member.status)">
-                  {{ member.status }}
-                </span>
-              </td>
-              <td class="text-end pe-4">
-                <div class="btn-group" role="group" aria-label="Member actions">
+              <td class="actions-cell">
+                <div class="action-buttons">
                   <button 
-                    class="btn btn-sm btn-outline-success" 
-                    @click.stop="viewMember(member)"
-                    title="View member details"
-                    aria-label="View member details"
-                  >
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button 
-                    class="btn btn-sm btn-outline-primary" 
+                    class="action-btn edit-btn" 
                     @click.stop="editMember(member)"
                     title="Edit member"
                     aria-label="Edit member"
                   >
-                    <i class="fas fa-pencil-alt"></i>
+                    <i class="fas fa-pen"></i>
                   </button>
                   <button 
-                    class="btn btn-sm btn-outline-danger" 
+                    class="action-btn delete-btn" 
                     @click.stop="confirmDelete(member)"
                     title="Delete member"
                     aria-label="Delete member"
                     :disabled="isDeleting"
                   >
-                    <i v-if="!isDeleting" class="fas fa-trash"></i>
-                    <span v-else class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <i v-if="!isDeleting" class="fas fa-trash-alt"></i>
+                    <span v-else class="spinner"></span>
                   </button>
                 </div>
               </td>
@@ -119,38 +105,67 @@
           </tbody>
         </table>
       </div>
-    </div>
 
-    <div class="d-flex justify-content-center mt-4" v-if="filteredMembers.length === 0">
-      <div class="text-center py-5">
-        <i class="fas fa-users text-muted" style="font-size: 3rem;"></i>
-        <h5 class="mt-3">No members found</h5>
-        <p class="text-muted">Try adjusting your search or filter criteria</p>
+      <!-- Empty State -->
+      <div class="empty-state" v-if="filteredMembers.length === 0">
+        <div class="empty-content">
+          <i class="fas fa-user-friends empty-icon"></i>
+          <h3>No members found</h3>
+          <p>Try adjusting your search or filter criteria</p>
+          <button class="empty-action-btn" @click="showAddMemberModal">
+            Add New Member
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Add/Edit Member Modal -->
-    <div class="modal fade" id="memberModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
+    <transition name="modal-fade">
+      <div class="modal-overlay" v-if="modalVisible" @click.self="closeModal">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">{{ isEditing ? 'Edit Member' : 'Add New Member' }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h2>{{ isEditing ? 'Edit Member' : 'Add New Member' }}</h2>
+            <button class="modal-close-btn" @click="closeModal" aria-label="Close modal">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
           <div class="modal-body">
-            <form @submit.prevent="submitMember">
-              <div class="mb-3">
+            <form @submit.prevent="submitMember" class="member-form">
+              <div class="form-group">
                 <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" v-model="currentMember.name" required aria-required="true">
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  v-model="currentMember.name" 
+                  required 
+                  aria-required="true"
+                  placeholder="Enter full name"
+                >
               </div>
-              <div class="row mb-3">
-                <div class="col-md-6">
+              
+              <div class="form-row">
+                <div class="form-group">
                   <label class="form-label">Age</label>
-                  <input type="number" class="form-control" v-model="currentMember.age" required aria-required="true">
+                  <input 
+                    type="number" 
+                    class="form-input" 
+                    v-model="currentMember.age" 
+                    required 
+                    aria-required="true"
+                    placeholder="Enter age"
+                    min="15"
+                    max="30"
+                  >
                 </div>
-                <div class="col-md-6">
+                <div class="form-group">
                   <label class="form-label">Position</label>
-                  <select class="form-select" v-model="currentMember.position" required aria-required="true">
+                  <select 
+                    class="form-select" 
+                    v-model="currentMember.position" 
+                    required 
+                    aria-required="true"
+                  >
+                    <option value="" disabled>Select position</option>
                     <option value="Chairperson">Chairperson</option>
                     <option value="Secretary">Secretary</option>
                     <option value="Treasurer">Treasurer</option>
@@ -159,66 +174,117 @@
                   </select>
                 </div>
               </div>
-              <div class="row mb-3">
-                <div class="col-md-6">
+              
+              <div class="form-row">
+                <div class="form-group">
                   <label class="form-label">Contact Number</label>
-                  <input type="tel" class="form-control" v-model="currentMember.contact" required aria-required="true">
+                  <input 
+                    type="tel" 
+                    class="form-input" 
+                    v-model="currentMember.contact" 
+                    required 
+                    aria-required="true"
+                    placeholder="Enter contact number"
+                  >
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label">Email</label>
-                  <input type="email" class="form-control" v-model="currentMember.email" aria-describedby="emailHelp">
-                  <small id="emailHelp" class="form-text text-muted">Optional</small>
+                <div class="form-group">
+                  <label class="form-label">Email <span class="optional">(Optional)</span></label>
+                  <input 
+                    type="email" 
+                    class="form-input" 
+                    v-model="currentMember.email" 
+                    placeholder="Enter email address"
+                  >
                 </div>
               </div>
-              <div class="mb-3">
+              
+              <div class="form-group">
                 <label class="form-label">Status</label>
-                <select class="form-select" v-model="currentMember.status" required aria-required="true">
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="On Leave">On Leave</option>
-                </select>
+                <div class="status-options">
+                  <label 
+                    v-for="status in statusOptions" 
+                    :key="status.value"
+                    :class="['status-option', { 'active': currentMember.status === status.value }]"
+                  >
+                    <input 
+                      type="radio" 
+                      v-model="currentMember.status" 
+                      :value="status.value"
+                      class="status-radio"
+                    >
+                    <span class="status-label">{{ status.label }}</span>
+                  </label>
+                </div>
               </div>
-              <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-success" :disabled="isSubmitting">
-                  <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                  {{ isEditing ? 'Update' : 'Save' }}
+              
+              <div class="form-actions">
+                <button 
+                  type="button" 
+                  class="cancel-btn" 
+                  @click="closeModal"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  class="submit-btn" 
+                  :disabled="isSubmitting"
+                >
+                  <span v-if="isSubmitting" class="spinner"></span>
+                  <span v-else>{{ isEditing ? 'Update Member' : 'Add Member' }}</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
-    </div>
+    </transition>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+    <transition name="modal-fade">
+      <div class="modal-overlay" v-if="deleteModalVisible" @click.self="closeDeleteModal">
+        <div class="delete-modal-content">
           <div class="modal-header">
-            <h5 class="modal-title text-danger">Confirm Deletion</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h2 class="delete-title">
+              <i class="fas fa-exclamation-circle warning-icon"></i>
+              Confirm Deletion
+            </h2>
+            <button class="modal-close-btn" @click="closeDeleteModal" aria-label="Close modal">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
           <div class="modal-body">
-            <p>Are you sure you want to delete <strong>{{ currentMember.name }}</strong> from the members list?</p>
-            <p class="text-muted small">This action cannot be undone.</p>
+            <p class="delete-message">
+              Are you sure you want to delete <strong>{{ currentMember.name }}</strong> from the members list?
+            </p>
+            <p class="delete-warning">
+              <i class="fas fa-info-circle"></i>
+              This action cannot be undone.
+            </p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" @click.stop="deleteMember" :disabled="isDeleting">
-              <span v-if="isDeleting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              Delete
+            <button class="cancel-btn" @click="closeDeleteModal">
+              Cancel
+            </button>
+            <button 
+              class="delete-confirm-btn" 
+              @click.stop="deleteMember" 
+              :disabled="isDeleting"
+            >
+              <span v-if="isDeleting" class="spinner"></span>
+              <span v-else>Delete Member</span>
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
 <script>
-import { Modal } from 'bootstrap';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { db } from '@/firebase/config';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 
 export default {
   setup() {
@@ -227,11 +293,14 @@ export default {
     const isEditing = ref(false);
     const isSubmitting = ref(false);
     const isDeleting = ref(false);
+    const modalVisible = ref(false);
+    const deleteModalVisible = ref(false);
+    
     const currentMember = ref({
       id: null,
       name: '',
       age: '',
-      position: 'Member',
+      position: '',
       contact: '',
       email: '',
       status: 'Active',
@@ -245,66 +314,42 @@ export default {
       { label: 'Inactive', value: 'Inactive' }
     ];
 
-    const members = ref([
-      {
-        id: 1,
-        name: 'Juan Dela Cruz',
-        age: 22,
-        position: 'Chairperson',
-        contact: '09123456789',
-        email: 'juan.delacruz@example.com',
-        status: 'Active',
-        avatar: 'https://randomuser.me/api/portraits/men/1.jpg'
-      },
-      {
-        id: 2,
-        name: 'Maria Santos',
-        age: 21,
-        position: 'Secretary',
-        contact: '09234567890',
-        email: 'maria.santos@example.com',
-        status: 'Active',
-        avatar: 'https://randomuser.me/api/portraits/women/1.jpg'
-      },
-      {
-        id: 3,
-        name: 'Pedro Bautista',
-        age: 20,
-        position: 'Treasurer',
-        contact: '09345678901',
-        email: 'pedro.bautista@example.com',
-        status: 'Active',
-        avatar: 'https://randomuser.me/api/portraits/men/2.jpg'
-      },
-      {
-        id: 4,
-        name: 'Ana Reyes',
-        age: 19,
-        position: 'Councilor',
-        contact: '09456789012',
-        email: 'ana.reyes@example.com',
-        status: 'Active',
-        avatar: 'https://randomuser.me/api/portraits/women/2.jpg'
-      },
-      {
-        id: 5,
-        name: 'Luis Garcia',
-        age: 18,
-        position: 'Member',
-        contact: '09567890123',
-        email: 'luis.garcia@example.com',
-        status: 'Inactive',
-        avatar: 'https://randomuser.me/api/portraits/men/3.jpg'
-      }
-    ]);
+    const statusOptions = [
+      { label: 'Active', value: 'Active' },
+      { label: 'Inactive', value: 'Inactive' },
+      { label: 'On Leave', value: 'On Leave' }
+    ];
 
-    let memberModal = null;
-    let deleteModal = null;
+    const members = ref([]);
+    let unsubscribe = null;
 
+    // Fetch members from Firestore in real-time
     onMounted(() => {
-      memberModal = new Modal(document.getElementById('memberModal'));
-      deleteModal = new Modal(document.getElementById('deleteModal'));
+      const membersCollection = collection(db, 'sk_members');
+      unsubscribe = onSnapshot(membersCollection, (snapshot) => {
+        members.value = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          avatar: doc.data().avatar || generateRandomAvatar()
+        }));
+      }, (error) => {
+        console.error('Error fetching members:', error);
+        // Show error toast in a real app
+      });
     });
+
+    // Clean up listener on component unmount
+    onUnmounted(() => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    });
+
+    function generateRandomAvatar() {
+      const gender = Math.random() > 0.5 ? 'men' : 'women';
+      const id = Math.floor(Math.random() * 50);
+      return `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
+    }
 
     const filteredMembers = computed(() => {
       let filtered = members.value;
@@ -312,10 +357,10 @@ export default {
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
         filtered = filtered.filter(member => 
-          member.name.toLowerCase().includes(query) || 
-          member.position.toLowerCase().includes(query) ||
-          member.contact.includes(query) ||
-          member.email.toLowerCase().includes(query)
+          member.name?.toLowerCase().includes(query) || 
+          member.position?.toLowerCase().includes(query) ||
+          member.contact?.includes(query) ||
+          member.email?.toLowerCase().includes(query)
         );
       }
       
@@ -336,22 +381,22 @@ export default {
 
     const positionBadgeClass = (position) => {
       const classes = {
-        'Chairperson': 'bg-success bg-opacity-10 text-success',
-        'Secretary': 'bg-primary bg-opacity-10 text-primary',
-        'Treasurer': 'bg-info bg-opacity-10 text-info',
-        'Councilor': 'bg-warning bg-opacity-10 text-warning',
-        'Member': 'bg-secondary bg-opacity-10 text-secondary'
+        'Chairperson': 'chairperson-badge',
+        'Secretary': 'secretary-badge',
+        'Treasurer': 'treasurer-badge',
+        'Councilor': 'councilor-badge',
+        'Member': 'member-badge'
       };
-      return classes[position] || 'bg-light text-dark';
+      return classes[position] || 'default-badge';
     };
 
     const statusBadgeClass = (status) => {
       const classes = {
-        'Active': 'bg-success bg-opacity-10 text-success',
-        'Inactive': 'bg-danger bg-opacity-10 text-danger',
-        'On Leave': 'bg-warning bg-opacity-10 text-warning'
+        'Active': 'active-badge',
+        'Inactive': 'inactive-badge',
+        'On Leave': 'on-leave-badge'
       };
-      return classes[status] || 'bg-light text-dark';
+      return classes[status] || 'default-badge';
     };
 
     const showAddMemberModal = () => {
@@ -360,67 +405,71 @@ export default {
         id: null,
         name: '',
         age: '',
-        position: 'Member',
+        position: '',
         contact: '',
         email: '',
         status: 'Active',
-        avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 50)}.jpg`
+        avatar: generateRandomAvatar()
       };
-      memberModal.show();
-    };
-
-    const viewMember = (member) => {
-      event?.stopPropagation();
-      alert(`Viewing details for ${member.name}`);
+      modalVisible.value = true;
     };
 
     const editMember = (member) => {
-      event?.stopPropagation();
       isEditing.value = true;
       currentMember.value = { ...member };
-      memberModal.show();
+      modalVisible.value = true;
+    };
+
+    const closeModal = () => {
+      modalVisible.value = false;
     };
 
     const submitMember = async () => {
       isSubmitting.value = true;
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const memberData = {
+          name: currentMember.value.name,
+          age: parseInt(currentMember.value.age),
+          position: currentMember.value.position,
+          contact: currentMember.value.contact,
+          email: currentMember.value.email || '',
+          status: currentMember.value.status,
+          avatar: currentMember.value.avatar
+        };
+
         if (isEditing.value) {
-          const index = members.value.findIndex(m => m.id === currentMember.value.id);
-          if (index !== -1) {
-            members.value[index] = { ...currentMember.value };
-          }
+          const memberRef = doc(db, 'sk_members', currentMember.value.id);
+          await updateDoc(memberRef, memberData);
         } else {
-          const newId = Math.max(...members.value.map(m => m.id)) + 1;
-          members.value.push({
-            ...currentMember.value,
-            id: newId
-          });
+          await addDoc(collection(db, 'sk_members'), memberData);
         }
-        memberModal.hide();
+        modalVisible.value = false;
       } catch (error) {
         console.error('Error submitting member:', error);
-        alert('Failed to save member. Please try again.');
+        // Show error toast in a real app
       } finally {
         isSubmitting.value = false;
       }
     };
 
     const confirmDelete = (member) => {
-      event?.stopPropagation();
       currentMember.value = { ...member };
-      deleteModal.show();
+      deleteModalVisible.value = true;
+    };
+
+    const closeDeleteModal = () => {
+      deleteModalVisible.value = false;
     };
 
     const deleteMember = async () => {
       isDeleting.value = true;
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        members.value = members.value.filter(m => m.id !== currentMember.value.id);
-        deleteModal.hide();
+        const memberRef = doc(db, 'sk_members', currentMember.value.id);
+        await deleteDoc(memberRef);
+        deleteModalVisible.value = false;
       } catch (error) {
         console.error('Error deleting member:', error);
-        alert('Failed to delete member. Please try again.');
+        // Show error toast in a real app
       } finally {
         isDeleting.value = false;
       }
@@ -430,18 +479,22 @@ export default {
       searchQuery,
       activeFilter,
       filters,
+      statusOptions,
       filteredMembers,
       currentMember,
       isEditing,
       isSubmitting,
       isDeleting,
+      modalVisible,
+      deleteModalVisible,
       positionBadgeClass,
       statusBadgeClass,
       showAddMemberModal,
-      viewMember,
       editMember,
+      closeModal,
       submitMember,
       confirmDelete,
+      closeDeleteModal,
       deleteMember
     };
   }
@@ -449,111 +502,693 @@ export default {
 </script>
 
 <style scoped>
-.sk-members {
+/* Base Styles */
+.sk-members-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  color: #333;
 }
 
-.member-avatar {
-  width: 40px;
-  height: 40px;
+/* Header Section */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
 }
 
-.member-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.header-content {
+  flex: 1;
 }
 
-.table th {
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.5px;
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(135deg, #28a745, #218838);
+  border-radius: 50%;
+  margin-right: 1rem;
+  color: white;
+}
+
+.page-description {
   color: #6c757d;
+  font-size: 1rem;
+  margin-left: 3.5rem;
 }
 
-.table-hover tbody tr:hover {
-  background-color: rgba(40, 167, 69, 0.05);
+.add-member-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.badge {
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.35em 0.65em;
+.add-member-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-.modal-header {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.modal-footer {
-  border-top: none;
-}
-
-.btn-group .btn {
-  padding: 0.375rem 0.75rem;
-  margin: 0 2px;
-  transition: all 0.2s ease;
-}
-
-.btn-group .btn:hover {
-  transform: translateY(-1px);
-}
-
-.btn-group .btn:active {
+.add-member-btn:active {
   transform: translateY(0);
 }
 
-.btn-group .btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+.add-member-btn i {
+  margin-right: 0.5rem;
 }
 
-.btn-outline-success {
+/* Controls Section */
+.controls-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-container {
+  flex: 1;
+  min-width: 250px;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: white;
+  color: #6c757d;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-tab:hover {
   border-color: #28a745;
   color: #28a745;
 }
 
-.btn-outline-success:hover {
-  background-color: #28a745;
+.filter-tab.active {
+  background: #28a745;
+  border-color: #28a745;
   color: white;
 }
 
-.btn-outline-primary {
-  border-color: #007bff;
-  color: #007bff;
+/* Members Table */
+.members-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
-.btn-outline-primary:hover {
-  background-color: #007bff;
-  color: white;
+.table-responsive {
+  overflow-x: auto;
 }
 
-.btn-outline-danger {
-  border-color: #dc3545;
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-table th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: #6c757d;
+  background: #f8f9fa;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.members-table td {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.member-cell {
+  min-width: 250px;
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.member-details {
+  flex: 1;
+}
+
+.member-name {
+  font-weight: 600;
+  margin: 0;
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
+.member-age {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.position-cell, .status-cell {
+  white-space: nowrap;
+}
+
+.position-badge, .status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.chairperson-badge {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.secretary-badge {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+}
+
+.treasurer-badge {
+  background-color: rgba(13, 202, 240, 0.1);
+  color: #0dcaf0;
+}
+
+.councilor-badge {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+}
+
+.member-badge {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
+
+.active-badge {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.inactive-badge {
+  background-color: rgba(220, 53, 69, 0.1);
   color: #dc3545;
 }
 
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: white;
+.on-leave-badge {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
 }
 
-@media (max-width: 767.98px) {
-  .table-responsive {
-    border: none;
+.contact-info {
+  font-size: 0.9rem;
+}
+
+.contact-item {
+  margin: 0.25rem 0;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+}
+
+.contact-item i {
+  margin-right: 0.5rem;
+  width: 1rem;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.edit-btn {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+}
+
+.edit-btn:hover {
+  background-color: rgba(13, 110, 253, 0.2);
+}
+
+.delete-btn {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.delete-btn:hover {
+  background-color: rgba(220, 53, 69, 0.2);
+}
+
+.delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.empty-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #adb5bd;
+  margin-bottom: 1.5rem;
+}
+
+.empty-action-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.empty-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content, .delete-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: modal-enter 0.3s ease-out;
+}
+
+.delete-modal-content {
+  max-width: 500px;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #2c3e50;
+}
+
+.delete-title {
+  display: flex;
+  align-items: center;
+  color: #dc3545;
+}
+
+.warning-icon {
+  margin-right: 0.75rem;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #6c757d;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #dc3545;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.delete-message {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.delete-warning {
+  display: flex;
+  align-items: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.delete-warning i {
+  margin-right: 0.5rem;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Form Styles */
+.member-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.optional {
+  color: #6c757d;
+  font-weight: normal;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.status-options {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.status-option {
+  flex: 1;
+  position: relative;
+}
+
+.status-radio {
+  position: absolute;
+  opacity: 0;
+}
+
+.status-label {
+  display: block;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.status-option.active .status-label {
+  border-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  font-weight: 500;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.cancel-btn {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  color: #6c757d;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cancel-btn:hover {
+  background: #f8f9fa;
+}
+
+.submit-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #28a745, #218838);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.delete-confirm-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.delete-confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.delete-confirm-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Spinner */
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    gap: 1rem;
   }
   
-  .btn-group {
-    flex-direction: row;
-    gap: 0.5rem;
+  .controls-section {
+    flex-direction: column;
   }
   
-  .btn-group .btn {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.875rem;
+  .form-row {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  .status-options {
+    flex-direction: column;
+  }
+  
+  .members-table th, 
+  .members-table td {
+    padding: 0.75rem;
+  }
+  
+  .member-cell {
+    min-width: auto;
+  }
+  
+  .action-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .sk-members-container {
+    padding: 1rem;
+  }
+  
+  .modal-content, .delete-modal-content {
+    margin: 0 1rem;
+    max-height: 80vh;
   }
 }
 </style>

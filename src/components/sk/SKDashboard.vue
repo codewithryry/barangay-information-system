@@ -1,5 +1,29 @@
 <template>
   <div class="sk-dashboard container py-4">
+    <!-- Static Dashboard Notice Modal -->
+    <div class="modal fade" id="staticDashboardModal" tabindex="-1" aria-labelledby="staticDashboardLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-warning" id="staticDashboardLabel">
+              <i class="bi bi-info-circle-fill me-2 text-warning"></i>
+              Notice
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            This <strong>dashboard</strong> is for demonstration purposes only and does <strong>not</strong> reflect live project statistics. <br />
+            <br>
+            <span class="text-success fw-semibold">Note:</span> Other sections such as <strong>Members</strong> and <strong>Forum</strong> are working as expected.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Got it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h2 class="fw-bold text-success mb-2">SK Dashboard</h2>
@@ -15,6 +39,7 @@
       </div>
     </div>
 
+    <!-- Statistics Cards -->
     <div class="row g-4 mb-4">
       <div class="col-md-4">
         <div class="card border-0 shadow-sm h-100">
@@ -66,6 +91,7 @@
       </div>
     </div>
 
+    <!-- Recent Activities -->
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white border-0">
         <h5 class="mb-0 fw-bold">Recent Activities</h5>
@@ -122,7 +148,14 @@
 
 <script>
 export default {
-  name: 'SKDashboard'
+  name: 'SKDashboard',
+  mounted() {
+    const modalEl = document.getElementById('staticDashboardModal');
+    if (modalEl && window.bootstrap) {
+      const modal = new window.bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  }
 }
 </script>
 
