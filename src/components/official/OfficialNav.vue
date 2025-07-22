@@ -25,21 +25,35 @@
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
             <router-link class="nav-link d-flex align-items-center" to="/official/dashboard">
+              <i class="fas fa-tachometer-alt me-2"></i>
               Dashboard
             </router-link>
           </li>
           <li class="nav-item">
             <router-link class="nav-link d-flex align-items-center" to="/official/residents">
+              <i class="fas fa-users me-2"></i>
               Residents
             </router-link>
           </li>
           <li class="nav-item">
             <router-link class="nav-link d-flex align-items-center" to="/official/requests">
+              <i class="fas fa-clipboard-list me-2"></i>
               Requests
+            </router-link>
+          </li>
+          <!-- Add Chat Link -->
+          <li class="nav-item">
+            <router-link class="nav-link d-flex align-items-center" to="/chat">
+              <i class="fas fa-comments me-2"></i>
+              Chat
+              <span v-if="unreadCount > 0" class="badge bg-danger ms-2">
+                {{ unreadCount }}
+              </span>
             </router-link>
           </li>
           <li class="nav-item">
             <a class="nav-link d-flex align-items-center logout-link" @click="logout">
+              <i class="fas fa-sign-out-alt me-2"></i>
               Logout
             </a>
           </li>
@@ -52,10 +66,15 @@
 <script>
 import { auth } from '@/firebase/config';
 import { useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/firebase/config';
 
 export default {
   setup() {
     const router = useRouter();
+    const unreadCount = ref(0);
+    let unsubscribe = null;
 
     const logout = async () => {
       try {
@@ -66,7 +85,30 @@ export default {
       }
     };
 
-    return { logout };
+    // Setup real-time unread messages count
+    const setupUnreadCount = () => {
+      if (!auth.currentUser) return;
+
+      const q = query(
+        collection(db, 'messages'),
+        where('receiver', '==', auth.currentUser.uid),
+        where('read', '==', false)
+      );
+
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        unreadCount.value = snapshot.size;
+      });
+    };
+
+    onMounted(() => {
+      setupUnreadCount();
+    });
+
+    onUnmounted(() => {
+      if (unsubscribe) unsubscribe();
+    });
+
+    return { logout, unreadCount };
   },
 };
 </script>
@@ -96,6 +138,7 @@ export default {
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .nav-link:hover, .dropdown-item:hover {
@@ -105,6 +148,14 @@ export default {
 
 .logout-link {
   cursor: pointer;
+}
+
+.badge {
+  font-size: 0.65rem;
+  padding: 0.25em 0.4em;
+  position: absolute;
+  top: 5px;
+  right: 5px;
 }
 
 @media (max-width: 991.98px) {
@@ -119,5 +170,16 @@ export default {
   .nav-link {
     padding: 0.75rem 1rem;
   }
+
+  .badge {
+    position: static;
+    margin-left: 0.5rem;
+  }
+}
+
+/* Font Awesome icons alignment */
+.nav-link i {
+  width: 20px;
+  text-align: center;
 }
 </style>

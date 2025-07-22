@@ -11,48 +11,35 @@
           alt="Loading..."
           class="loading-logo"
         />
-        <!-- <p class="loading-text">Welcome! Getting things ready for you…</p> -->
       </div>
     </div>
 
     <!-- Main App Content -->
     <template v-else>
-      <!-- Debug info for development -->
-      <!-- <div
-        style="position: fixed; top: 0; left: 0; background: #f9f9f9; padding: 10px; font-size: 14px; z-index: 10000; max-width: 320px; border: 1px solid #ccc;"
-      >
-        <strong>Debug Info:</strong><br />
-        <b>Route Name:</b> {{ $route.name }}<br />
-        <b>showNav:</b> {{ showNav }}<br />
-        <b>showFooter:</b> {{ showFooter }}<br />
-        <b>userRole:</b> {{ userRole }}<br />
-        <b>loading:</b> {{ loading }}<br />
-        <b>roleLoading:</b> {{ roleLoading }}<br />
-        <b>Show ResidentNav:</b> {{ showNav && userRole === 'resident' }}<br />
-        <b>Show OfficialNav:</b> {{ showNav && userRole === 'official' }}<br />
-        <b>Show SKNav:</b> {{ showNav && userRole === 'sk' }}<br />
-        <b>Show AdminNav:</b> {{ showNav && userRole === 'admin' }}<br />
-        <b>Show Public NavBar:</b> {{ showNav && userRole === null }}<br />
-      </div> -->
+      <!-- Maintenance mode check -->
+      <template v-if="!maintenanceMode || isAdmin">
+        <!-- Role-specific navbars -->
+        <ResidentNav v-if="showNav && userRole === 'resident'" />
+        <OfficialNav v-if="showNav && userRole === 'official'" />
+        <SKNav v-if="showNav && userRole === 'sk'" />
+        <AdminNav v-if="showNav && userRole === 'admin'" />
+        <!-- Public navbar when not logged in -->
+        <NavBar v-if="showNav && userRole === null && !$route.meta.hideLayout" />
 
-      <!-- Role-specific navbars -->
-      <ResidentNav v-if="showNav && userRole === 'resident'" />
-      <OfficialNav v-if="showNav && userRole === 'official'" />
-      <SKNav v-if="showNav && userRole === 'sk'" />
-      <AdminNav v-if="showNav && userRole === 'admin'" />
-      <!-- Public navbar when not logged in -->
-      <NavBar v-if="showNav && userRole === null" />
+        <!-- Notifications -->
+        <Notification />
 
-      <!-- Notifications -->
-      <Notification />
+        <!-- Router outlet -->
+        <main>
+          <router-view />
+        </main>
 
-      <!-- Router outlet -->
-      <main>
-        <router-view />
-      </main>
+        <!-- Footer -->
+        <Footer v-if="showFooter && !$route.meta.hideLayout" />
+      </template>
 
-      <!-- Footer -->
-      <Footer v-if="showFooter" />
+      <!-- Maintenance mode content -->
+      <UnderMaintenance v-if="maintenanceMode && !isAdmin" />
     </template>
   </div>
 </template>
@@ -65,6 +52,7 @@ import SKNav from '@/components/sk/SKNav'
 import AdminNav from '@/components/admin/AdminNav'
 import Footer from '@/components/common/Footer'
 import Notification from '@/components/common/Notification'
+import UnderMaintenance from '@/components/UnderMaintenance.vue'
 
 export default {
   components: {
@@ -74,57 +62,70 @@ export default {
     SKNav,
     AdminNav,
     Footer,
-    Notification
+    Notification,
+    UnderMaintenance
   },
   data() {
     return {
       loading: true,
       roleLoading: true,
-      // routes where loading overlay should NOT show
-    hideLoadingRoutes: [
-    'home',
-    'about',
-    'services',
-    'announcements',
-    'login',
-    'register',
-    'NotFound'
-  ]
-
+      hideLoadingRoutes: [
+        'home',
+        'about',
+        'services',
+        'announcements',
+        'login',
+        'register',
+        'NotFound',
+        'maintenance'
+      ]
     }
   },
   computed: {
     showNav() {
-      return this.$route.name !== 'login' && this.$route.name !== 'register' && this.$route.name !== 'NotFound';
+      return this.$route.name !== 'login' && 
+             this.$route.name !== 'register' && 
+             this.$route.name !== 'NotFound' &&
+             !this.$route.meta.hideLayout;
     },
     showFooter() {
       const noFooterRoutes = ['login', 'register', 'admin-dashboard', 'NotFound'];
-      return !noFooterRoutes.includes(this.$route.name);
+      return !noFooterRoutes.includes(this.$route.name) && !this.$route.meta.hideLayout;
     },
     userRole() {
       return this.$store.state.auth.user?.role ?? null;
+    },
+    maintenanceMode() {
+      return this.$store.state.maintenance;
+    },
+    isAdmin() {
+      return this.userRole === 'admin';
     }
   },
   watch: {
     userRole(newVal) {
-      console.log('[Watcher] userRole changed:', newVal);
       if (newVal !== undefined && newVal !== null) {
         this.roleLoading = false;
       }
+    },
+    '$route'(to) {
+      // Update document title based on route meta
+      document.title = to.meta.title ? 
+        `${to.meta.title} | Barangay Information System` : 
+        'Barangay Information System';
     }
   },
   async created() {
-    console.log('[Created] Initializing auth...');
     try {
       await this.$store.dispatch('auth/initializeAuth');
-      console.log('[Created] Auth initialized');
+      // Check maintenance status when app initializes
+      await this.$store.dispatch('checkMaintenanceStatus');
     } catch (e) {
-      console.error('[Created] Error initializing auth:', e);
+      console.error('Error initializing auth:', e);
     }
 
     this.loading = false;
 
-    // If userRole already available after init
     if (this.userRole !== undefined && this.userRole !== null) {
       this.roleLoading = false;
     }
@@ -155,15 +156,6 @@ export default {
   width: 400px;
   height: auto;
   animation: pulse 1.5s infinite ease-in-out;
-}
-
-.loading-text {
-  font-size: 1.2rem;
-  margin-top: 20px;
-  color: #333;
-  font-weight: 500;
-  font-family: 'Segoe UI', sans-serif;
-  animation: fadeIn 1s ease-in-out;
 }
 
 @keyframes pulse {

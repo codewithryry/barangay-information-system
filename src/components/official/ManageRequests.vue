@@ -1,7 +1,7 @@
 <template>
   <div class="manage-requests">
     <div class="header">
-      <h2><i class=""></i> Document Requests</h2>
+      <h2><i class="fas fa-file-alt"></i> Document Requests</h2>
     </div>
 
     <div v-if="error" class="error-message">
@@ -57,6 +57,7 @@
           <tr>
             <th>Request ID</th>
             <th>Document Type</th>
+            <th>Resident Name</th>
             <th>Date Requested</th>
             <th>Purpose</th>
             <th>Status</th>
@@ -67,6 +68,7 @@
           <tr v-for="request in filteredRequests" :key="request.id">
             <td>{{ request.id || request.documentId || 'N/A' }}</td>
             <td>{{ getDocumentTypeLabel(request.type || request.documentType) }}</td>
+            <td>{{ request.userName }}</td>
             <td>{{ formatDate(request.createdAt) }}</td>
             <td>{{ request.purpose || 'N/A' }}</td>
             <td>
@@ -99,6 +101,14 @@
                     <span class="btn-text">Reject</span>
                   </button>
                 </div>
+                <button
+                  class="action-btn print"
+                  @click="generateDocument(request)"
+                  v-else-if="request.status === 'approved'"
+                >
+                  <i class="fas fa-print"></i>
+                  <span class="btn-text">Print</span>
+                </button>
                 <div class="status-indicator" v-else>
                   <span class="status-text">Action taken</span>
                 </div>
@@ -139,6 +149,10 @@
             <div>{{ selectedRequest.contact || 'N/A' }}</div>
           </div>
           <div class="detail-row">
+            <label>Address:</label>
+            <div>{{ selectedRequest.address || 'N/A' }}</div>
+          </div>
+          <div class="detail-row">
             <label>Document Type:</label>
             <div>{{ getDocumentTypeLabel(selectedRequest.type || selectedRequest.documentType) }}</div>
           </div>
@@ -158,6 +172,14 @@
                 {{ selectedRequest.status }}
               </span>
             </div>
+          </div>
+          <div class="detail-row" v-if="selectedRequest.businessName">
+            <label>Business Name:</label>
+            <div>{{ selectedRequest.businessName }}</div>
+          </div>
+          <div class="detail-row" v-if="selectedRequest.businessAddress">
+            <label>Business Address:</label>
+            <div>{{ selectedRequest.businessAddress }}</div>
           </div>
           <div class="detail-row" v-if="selectedRequest.notes">
             <label>Notes:</label>
@@ -181,10 +203,28 @@
           >
             <i class="fas fa-times"></i> Reject
           </button>
+          <button
+            class="action-btn print"
+            @click="generateDocument(selectedRequest)"
+            v-if="selectedRequest.status === 'approved'"
+          >
+            <i class="fas fa-print"></i> Generate Document
+          </button>
           <button class="action-btn close" @click="closeModal" :disabled="isUpdating">
             <i class="fas fa-times"></i> Close
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Printable Document Modal -->
+    <div class="modal" :class="{ show: showPrintableDocument }" v-if="showPrintableDocument">
+      <div class="modal-content printable-modal">
+        <PrintableDocument
+          :requestData="currentDocumentData"
+          :barangayInfo="barangayInfo"
+          @close="closePrintableDocument"
+        />
       </div>
     </div>
 
@@ -214,8 +254,12 @@ import {
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '@/firebase/config';
+import PrintableDocument from '@/components/official/PrintableDocument.vue';
 
 export default {
+  components: {
+    PrintableDocument
+  },
   setup() {
     const requests = ref([]);
     const users = ref({});
@@ -233,6 +277,8 @@ export default {
     const documentTypeFilter = ref('');
     const currentFilter = ref('all');
     const selectedRequest = ref(null);
+    const showPrintableDocument = ref(false);
+    const currentDocumentData = ref(null);
     
     // Toast notification
     const showToast = ref(false);
@@ -254,6 +300,13 @@ export default {
       approved: 'fas fa-check-circle',
       rejected: 'fas fa-times-circle',
     };
+
+    const barangayInfo = ref({
+      name: 'Your Barangay',
+      address: 'City, Province',
+      contact: '0912-345-6789',
+      captain: 'Hon. Barangay Captain'
+    });
 
     let unsubscribe = null;
     const auth = getAuth();
@@ -300,7 +353,7 @@ export default {
         
         await fetchAllUsers();
 
-        const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc')); // Use 'requests' collection
+        const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc'));
         unsubscribe = onSnapshot(
           q,
           async (snapshot) => {
@@ -312,12 +365,13 @@ export default {
               const userData = await fetchUserData(userId);
               
               requestsData.push({
-                id: doc.id, // Firestore document ID
-                documentId: requestData.id || doc.id, // Custom ID (e.g., BRGY-250601-7793)
+                id: doc.id,
+                documentId: requestData.id || doc.id,
                 ...requestData,
                 userName: requestData.userName || userData?.displayName || 'Unknown Resident',
                 contact: userData?.contact || 'N/A',
                 email: userData?.email || 'N/A',
+                address: requestData.address || userData?.address || 'N/A',
                 createdAt: requestData.createdAt?.toDate?.() || null,
                 updatedAt: requestData.updatedAt?.toDate?.() || null
               });
@@ -406,6 +460,24 @@ export default {
       } finally {
         isUpdating.value = false;
       }
+    };
+
+    const generateDocument = (request) => {
+      currentDocumentData.value = {
+        ...request,
+        type: request.type || request.documentType,
+        userName: request.userName,
+        address: request.address || barangayInfo.value.address,
+        purpose: request.purpose || 'personal use',
+        businessName: request.businessName,
+        businessAddress: request.businessAddress
+      };
+      showPrintableDocument.value = true;
+    };
+
+    const closePrintableDocument = () => {
+      showPrintableDocument.value = false;
+      currentDocumentData.value = null;
     };
 
     const showToastNotification = (message, icon, isError = false) => {
@@ -518,6 +590,9 @@ export default {
       toastMessage,
       toastIcon,
       isToastError,
+      showPrintableDocument,
+      currentDocumentData,
+      barangayInfo,
       updateRequestStatus,
       viewRequest,
       closeModal,
@@ -525,7 +600,9 @@ export default {
       filterRequests,
       searchRequests,
       formatDate,
-      getDocumentTypeLabel
+      getDocumentTypeLabel,
+      generateDocument,
+      closePrintableDocument
     };
   },
 };

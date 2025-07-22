@@ -11,30 +11,29 @@
         <span class="brand-text">Resident Portal</span>
       </router-link>
       
-      <button class="navbar-toggler" @click="toggleMenu">
+      <button class="navbar-toggler" @click="toggleMenu" :class="{ 'active': menuOpen }">
         <span class="toggler-icon"></span>
       </button>
       
       <div class="navbar-menu" :class="{ 'active': menuOpen }">
         <ul class="nav-links">
           <li class="nav-item">
-            <router-link class="nav-link" active-class="active" to="/resident/dashboard">
+            <router-link class="nav-link" active-class="active" to="/resident/dashboard" @click="closeMenu">
               <span>Dashboard</span>
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" active-class="active" to="/resident/profile">
-     
+            <router-link class="nav-link" active-class="active" to="/resident/profile" @click="closeMenu">
               <span>Profile</span>
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" active-class="active" to="/resident/request">
+            <router-link class="nav-link" active-class="active" to="/resident/request" @click="closeMenu">
               <span>Requests</span>
             </router-link>
           </li>
-          <li class="nav-item logout-item">
-            <button class="logout-button" @click="logout">
+          <li class="nav-item">
+            <button class="nav-link logout-button" @click="logout">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>
@@ -76,6 +75,9 @@ export default {
   methods: {
     toggleMenu() {
       this.menuOpen = !this.menuOpen;
+    },
+    closeMenu() {
+      this.menuOpen = false;
     }
   }
 };
@@ -100,6 +102,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .navbar-brand {
@@ -110,6 +113,7 @@ export default {
   font-weight: 600;
   font-size: 1.25rem;
   text-decoration: none;
+  z-index: 1001;
 }
 
 .brand-logo {
@@ -129,6 +133,7 @@ export default {
   cursor: pointer;
   padding: 0.5rem;
   display: none;
+  z-index: 1001;
 }
 
 .toggler-icon {
@@ -156,6 +161,18 @@ export default {
 
 .toggler-icon::after {
   transform: translateY(6px);
+}
+
+.navbar-toggler.active .toggler-icon {
+  background-color: transparent;
+}
+
+.navbar-toggler.active .toggler-icon::before {
+  transform: rotate(45deg);
+}
+
+.navbar-toggler.active .toggler-icon::after {
+  transform: rotate(-45deg);
 }
 
 .navbar-menu {
@@ -206,18 +223,19 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: none;
   border: none;
+  color: rgba(255, 255, 255, 0.9);
   padding: 0.75rem 1.25rem;
   border-radius: 0.5rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .logout-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .logout-button svg {
@@ -231,17 +249,18 @@ export default {
   }
   
   .navbar-menu {
-    position: fixed;
-    top: 70px;
+    position: absolute;
+    top: 100%;
     left: 0;
     right: 0;
     background: #4361ee;
-    flex-direction: column;
-    padding: 1rem;
+    padding: 1rem 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transform: translateY(-100%);
+    transform: translateY(-150%);
     opacity: 0;
     transition: all 0.3s ease;
+    flex-direction: column;
+    z-index: 1000;
   }
   
   .navbar-menu.active {
@@ -252,36 +271,17 @@ export default {
   .nav-links {
     flex-direction: column;
     width: 100%;
+    gap: 0.25rem;
   }
   
   .nav-item {
     width: 100%;
   }
   
-  .nav-link {
+  .nav-link, .logout-button {
     padding: 1rem;
     border-radius: 0.5rem;
-  }
-  
-  .logout-item {
-    margin-top: 1rem;
-  }
-  
-  .logout-button {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .navbar-toggler.active .toggler-icon {
-    background-color: transparent;
-  }
-  
-  .navbar-toggler.active .toggler-icon::before {
-    transform: rotate(45deg);
-  }
-  
-  .navbar-toggler.active .toggler-icon::after {
-    transform: rotate(-45deg);
+    justify-content: flex-start;
   }
 }
 </style>

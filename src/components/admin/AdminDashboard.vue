@@ -36,6 +36,16 @@
           </ul>
           <br>
         </div>
+        <div class="nav-section">
+          <h4>System</h4>
+          <ul>
+            <li :class="{ active: activeSection === 'system' }">
+              <a @click="activeSection = 'system'; sidebarOpen = false">
+                <i class="fas fa-cog"></i> <span>System Settings</span>
+              </a>
+            </li>
+          </ul>
+        </div>
         <div class="nav-section logout-section">
           <ul>
             <li>
@@ -291,6 +301,39 @@
         </div>
       </section>
 
+      <!-- Add this section with your other content sections -->
+      <section v-if="activeSection === 'system'" class="content-section">
+        <div class="card">
+          <div class="card-header">
+            <h3>System Maintenance</h3>
+          </div>
+          <div class="card-body">
+            <div class="maintenance-controls">
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" v-model="maintenanceEnabled" @change="toggleMaintenance">
+                  Enable Maintenance Mode
+                </label>
+              </div>
+              
+              <div v-if="maintenanceEnabled" class="form-group">
+                <label>Maintenance Message</label>
+                <textarea v-model="maintenanceMessage" class="form-control" placeholder="Enter maintenance message"></textarea>
+              </div>
+              
+              <div v-if="maintenanceEnabled" class="form-group">
+                <label>Estimated Completion</label>
+                <input v-model="maintenanceEstimate" type="text" class="form-control" placeholder="Estimated completion time">
+              </div>
+              
+              <button @click="saveMaintenanceSettings" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Announcement Modal -->
       <AnnouncementModal
         :isVisible="showAnnouncementModal"
@@ -324,7 +367,8 @@ import {
   getDoc,
   orderBy,
   addDoc,
-  where
+  where,
+  setDoc
 } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import * as XLSX from 'xlsx'
@@ -373,16 +417,21 @@ export default {
       sidebarOpen: false,
       showConfirmModal: false,
       confirmMessage: '',
-      deleteAction: null
+      deleteAction: null,
+      maintenanceEnabled: false,
+      maintenanceMessage: '',
+      maintenanceEstimate: ''
     }
   },
   computed: {
     sectionTitle() {
-      return {
+      const sections = {
         users: 'User Management',
         transactions: 'Transaction History',
-        announcements: 'Announcements'
-      }[this.activeSection]
+        announcements: 'Announcements',
+        system: 'System Settings'
+      }
+      return sections[this.activeSection] || 'Admin Dashboard'
     },
     userInitials() {
       return this.user.name
@@ -393,16 +442,16 @@ export default {
       return this.allUsers.filter(user => {
         const search = this.searchQuery.toLowerCase()
         return (
-          user.name?.toLowerCase().includes(search) ||
-          user.email?.toLowerCase().includes(search) ||
-          user.contact?.toLowerCase().includes(search) ||
-          user.address?.toLowerCase().includes(search) ||
-          user.birthdate?.toLowerCase().includes(search) ||
-          user.role?.toLowerCase().includes(search) ||
-          user.adminRole?.toLowerCase().includes(search) ||
-          user.position?.toLowerCase().includes(search) ||
-          user.skPosition?.toLowerCase().includes(search) ||
-          user.status?.toLowerCase().includes(search)
+          (user.name?.toLowerCase().includes(search)) ||
+          (user.email?.toLowerCase().includes(search)) ||
+          (user.contact?.toLowerCase().includes(search)) ||
+          (user.address?.toLowerCase().includes(search)) ||
+          (user.birthdate?.toLowerCase().includes(search)) ||
+          (user.role?.toLowerCase().includes(search)) ||
+          (user.adminRole?.toLowerCase().includes(search)) ||
+          (user.position?.toLowerCase().includes(search)) ||
+          (user.skPosition?.toLowerCase().includes(search)) ||
+          (user.status?.toLowerCase().includes(search))
         )
       })
     },
@@ -410,11 +459,11 @@ export default {
       let filtered = this.transactions.filter(tx => {
         const search = this.searchQuery.toLowerCase()
         return (
-          tx.id?.toLowerCase().includes(search) ||
-          tx.userName?.toLowerCase().includes(search) ||
-          tx.documentType?.toLowerCase().includes(search) ||
-          tx.type?.toLowerCase().includes(search) ||
-          tx.purpose?.toLowerCase().includes(search)
+          (tx.id?.toLowerCase().includes(search)) ||
+          (tx.userName?.toLowerCase().includes(search)) ||
+          (tx.documentType?.toLowerCase().includes(search)) ||
+          (tx.type?.toLowerCase().includes(search)) ||
+          (tx.purpose?.toLowerCase().includes(search))
         )
       })
 
@@ -452,17 +501,14 @@ export default {
       }
       return map[role] || 'User'
     },
-    
     getStatusClass(user) {
       if (user.isApproved) return 'approved'
       return user.status || 'pending'
     },
-    
     getStatusText(user) {
       if (user.isApproved) return 'Approved'
       return user.status || 'Pending'
     },
-
     async fetchAllUsers() {
       this.loadingUsers = true
       this.userError = null
@@ -479,15 +525,15 @@ export default {
           id: doc.id,
           ...doc.data()
         }))
+        this.$notify.success('Users loaded successfully')
       } catch (error) {
         console.error('Error fetching users:', error)
         this.userError = 'Failed to load users'
-        this.$toast?.error?.('Failed to load users')
+        this.$notify.error('Failed to load users. Please try again.')
       } finally {
         this.loadingUsers = false
       }
     },
-
     async fetchTransactions() {
       this.loadingTransactions = true
       this.transactionError = null
@@ -511,15 +557,15 @@ export default {
 
         this.transactions = transactionsData
         this.totalTransactions = transactionsData.length
+        this.$notify.success('Transactions loaded successfully')
       } catch (error) {
         console.error('Error fetching transactions:', error)
         this.transactionError = 'Failed to load transactions'
-        this.$toast?.error?.('Failed to load transactions')
+        this.$notify.error('Failed to load transactions. Please try again.')
       } finally {
         this.loadingTransactions = false
       }
     },
-
     async fetchAnnouncements() {
       this.loadingAnnouncements = true
       this.announcementError = null
@@ -541,15 +587,15 @@ export default {
             })
           }
         }
+        this.$notify.success('Announcements loaded successfully')
       } catch (error) {
         console.error('Error fetching announcements:', error)
         this.announcementError = 'Failed to load announcements'
-        this.$toast?.error?.('Failed to load announcements')
+        this.$notify.error('Failed to load announcements. Please try again.')
       } finally {
         this.loadingAnnouncements = false
       }
     },
-
     async getRecipientNames(recipientIds) {
       if (!recipientIds || !recipientIds.length) return 'All Users'
       try {
@@ -566,7 +612,6 @@ export default {
         return 'Unknown Users'
       }
     },
-
     formatDate(date) {
       if (!date) return 'N/A'
       const d = date?.toDate ? date.toDate() : new Date(date)
@@ -578,7 +623,6 @@ export default {
         minute: '2-digit'
       })
     },
-
     toggleSelectAll() {
       if (this.selectAll) {
         this.selectedUsers = this.filteredUsers.map(user => user.id)
@@ -586,7 +630,6 @@ export default {
         this.selectedUsers = []
       }
     },
-
     async bulkApproveUsers() {
       this.confirmMessage = `Are you sure you want to approve ${this.selectedUsers.length} users?`
       this.deleteAction = async () => {
@@ -603,15 +646,14 @@ export default {
           this.fetchAllUsers()
           this.selectedUsers = []
           this.selectAll = false
-          this.$toast?.success?.('Users approved successfully')
+          this.$notify.success(`${this.selectedUsers.length} users approved successfully`)
         } catch (error) {
           console.error('Error approving users:', error)
-          this.$toast?.error?.('Failed to approve users')
+          this.$notify.error('Failed to approve users. Please try again.')
         }
       }
       this.showConfirmModal = true
     },
-
     async bulkDeleteUsers() {
       this.confirmMessage = `Are you sure you want to delete ${this.selectedUsers.length} users?`
       this.deleteAction = async () => {
@@ -621,15 +663,14 @@ export default {
           this.fetchAllUsers()
           this.selectedUsers = []
           this.selectAll = false
-          this.$toast?.success?.('Users deleted successfully')
+          this.$notify.success(`${this.selectedUsers.length} users deleted successfully`)
         } catch (error) {
           console.error('Error deleting users:', error)
-          this.$toast?.error?.('Failed to delete users')
+          this.$notify.error('Failed to delete users. Please try again.')
         }
       }
       this.showConfirmModal = true
     },
-
     async approveUser(user) {
       try {
         const userRef = doc(db, 'users', user.id)
@@ -642,79 +683,65 @@ export default {
         
         await updateDoc(userRef, updateData)
         this.fetchAllUsers()
-        this.$toast?.success?.(`User ${user.name} approved successfully`)
+        this.$notify.success(`User ${user.name} approved successfully`)
       } catch (error) {
         console.error('Error approving user:', error)
-        this.$toast?.error?.(`Failed to approve user: ${error.message}`)
+        this.$notify.error(`Failed to approve user: ${error.message}`)
       }
     },
-
     confirmDeleteUser(user) {
       this.confirmMessage = `Are you sure you want to delete ${user.name}?`
       this.deleteAction = () => this.deleteUser(user.id)
       this.showConfirmModal = true
     },
-
     confirmDeleteAnnouncement(id) {
       this.confirmMessage = 'Are you sure you want to delete this announcement?'
       this.deleteAction = () => this.deleteAnnouncement(id)
       this.showConfirmModal = true
     },
-
     async deleteUser(userId) {
       try {
         await deleteDoc(doc(db, 'users', userId))
         this.fetchAllUsers()
-        this.$toast?.success?.('User deleted successfully')
+        this.$notify.success('User deleted successfully')
       } catch (error) {
         console.error('Error deleting user:', error)
-        this.$toast?.error?.('Failed to delete user')
+        this.$notify.error('Failed to delete user. Please try again.')
       }
     },
-
     async deleteAnnouncement(id) {
       try {
         await deleteDoc(doc(db, 'announcements', id))
         this.fetchAnnouncements()
-        this.$toast?.success?.('Announcement deleted successfully')
+        this.$notify.success('Announcement deleted successfully')
       } catch (error) {
         console.error('Error deleting announcement:', error)
-        this.$toast?.error?.('Failed to delete announcement')
+        this.$notify.error('Failed to delete announcement. Please try again.')
       }
     },
-
     changePage(page) {
       if (page < 1 || page > this.totalPages) return
       this.currentPage = page
     },
-
     filterTransactionsByDate() {
       this.currentPage = 1
       this.fetchTransactions()
     },
-
     previewDocument(tx) {
       if (tx.documentUrl) {
         window.open(tx.documentUrl, '_blank')
       }
     },
-
     showCreateAnnouncementModal() {
-      console.log('Opening create announcement modal')
       this.newAnnouncement = { title: '', content: '', recipientIds: [] }
       this.editingAnnouncement = null
       this.showAnnouncementModal = true
-      console.log('showAnnouncementModal:', this.showAnnouncementModal)
     },
-
     editAnnouncement(announcement) {
-      console.log('Opening edit announcement modal', announcement)
       this.newAnnouncement = { ...announcement }
       this.editingAnnouncement = announcement
       this.showAnnouncementModal = true
-      console.log('showAnnouncementModal:', this.showAnnouncementModal)
     },
-
     async saveAnnouncement(announcement, editingAnnouncement) {
       try {
         if (editingAnnouncement) {
@@ -725,6 +752,7 @@ export default {
             recipientIds: announcement.recipientIds || [],
             updatedAt: new Date()
           })
+          this.$notify.success('Announcement updated successfully')
         } else {
           await addDoc(collection(db, 'announcements'), {
             title: announcement.title,
@@ -733,27 +761,23 @@ export default {
             createdAt: new Date(),
             read: false
           })
+          this.$notify.success('Announcement created successfully')
         }
         this.showAnnouncementModal = false
         this.fetchAnnouncements()
-        this.$toast?.success?.('Announcement saved successfully')
       } catch (error) {
         console.error('Error saving announcement:', error)
-        this.$toast?.error?.('Failed to save announcement: ' + error.message)
+        this.$notify.error('Failed to save announcement: ' + error.message)
       }
     },
-
     closeAnnouncementModal() {
-      console.log('Closing announcement modal')
       this.showAnnouncementModal = false
     },
-
     closeConfirmModal() {
       this.showConfirmModal = false
       this.deleteAction = null
       this.confirmMessage = ''
     },
-
     executeDelete() {
       if (this.deleteAction) {
         this.$refs.confirmationModal.startDeleting()
@@ -763,7 +787,6 @@ export default {
         })
       }
     },
-
     exportUsers() {
       try {
         const data = this.allUsers.map(user => ({
@@ -780,13 +803,12 @@ export default {
           CreatedAt: this.formatDate(user.createdAt)
         }))
         this.exportExcel('UsersExport.xlsx', data)
-        this.$toast?.success?.('Users data exported successfully')
+        this.$notify.success('Users data exported successfully')
       } catch (e) {
         console.error('Export users failed:', e)
-        this.$toast?.error?.('Failed to export users')
+        this.$notify.error('Failed to export users. Please try again.')
       }
     },
-
     exportTransactions() {
       try {
         const data = this.filteredTransactions.map(tx => ({
@@ -799,13 +821,12 @@ export default {
           CreatedAt: this.formatDate(tx.createdAt)
         }))
         this.exportExcel('TransactionsExport.xlsx', data)
-        this.$toast?.success?.('Transactions data exported successfully')
+        this.$notify.success('Transactions data exported successfully')
       } catch (e) {
         console.error('Export transactions failed:', e)
-        this.$toast?.error?.('Failed to export transactions')
+        this.$notify.error('Failed to export transactions. Please try again.')
       }
     },
-
     exportExcel(filename, jsonData) {
       const worksheet = XLSX.utils.json_to_sheet(jsonData)
       const headerRange = XLSX.utils.decode_range(worksheet['!ref'])
@@ -829,15 +850,55 @@ export default {
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
       XLSX.writeFile(workbook, filename)
     },
-
     async logout() {
       try {
         await signOut(auth)
         this.$router.push('/login')
-        this.$toast?.success?.('Logged out successfully')
+        this.$notify.success('Logged out successfully')
       } catch (error) {
         console.error('Error logging out:', error)
-        this.$toast?.error?.('Failed to logout')
+        this.$notify.error('Failed to logout. Please try again.')
+      }
+    },
+    async loadMaintenanceSettings() {
+      try {
+        const docRef = doc(db, 'system', 'maintenance')
+        const docSnap = await getDoc(docRef)
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data()
+          this.maintenanceEnabled = data.enabled || false
+          this.maintenanceMessage = data.message || ''
+          this.maintenanceEstimate = data.estimatedCompletion || ''
+        }
+      } catch (error) {
+        console.error('Error loading maintenance settings:', error)
+        this.$notify.error('Failed to load maintenance settings. Please try again.')
+      }
+    },
+    async saveMaintenanceSettings() {
+      try {
+        const docRef = doc(db, 'system', 'maintenance')
+        await setDoc(docRef, {
+          enabled: this.maintenanceEnabled,
+          message: this.maintenanceMessage,
+          estimatedCompletion: this.maintenanceEstimate,
+          updatedAt: new Date()
+        })
+        
+        this.$notify.success('Maintenance settings saved successfully')
+      } catch (error) {
+        console.error('Error saving maintenance settings:', error)
+        this.$notify.error('Failed to save maintenance settings. Please try again.')
+      }
+    },
+    toggleMaintenance() {
+      if (this.maintenanceEnabled) {
+        this.maintenanceMessage = 'Our barangay system is currently undergoing scheduled maintenance. We apologize for the inconvenience and appreciate your patience.'
+        this.maintenanceEstimate = new Date(Date.now() + 86400000).toLocaleString()
+      } else {
+        this.maintenanceMessage = ''
+        this.maintenanceEstimate = ''
       }
     }
   },
@@ -863,6 +924,7 @@ export default {
           }
         } catch (error) {
           console.error('Error fetching user profile:', error)
+          this.$notify.error('Failed to load user profile. Please refresh the page.')
         }
       }
     })
@@ -870,9 +932,58 @@ export default {
     this.fetchAllUsers()
     this.fetchTransactions()
     this.fetchAnnouncements()
+    this.loadMaintenanceSettings()
   }
 }
 </script>
+
+<style scoped>
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  color: white;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+  background-color: #4CAF50;
+}
+
+.notification.error {
+  background-color: #F44336;
+}
+
+.notification.fade-out {
+  animation: fadeOut 0.3s ease-in;
+  opacity: 0;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+</style>
+
 
 <style scoped>
 /* Base Styles */
@@ -1556,5 +1667,54 @@ export default {
   .filter-group select {
     width: 100%;
   }
+}
+
+/* Add these styles to your existing styles */
+.maintenance-controls {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+textarea.form-control {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-group input[type="checkbox"] {
+  margin-right: 8px;
+}
+#notification-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 </style>

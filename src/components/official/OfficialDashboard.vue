@@ -2,7 +2,39 @@
   <div class="official-dashboard">
     <div class="dashboard-header">
       <h2><i class=""></i> Barangay Official Dashboard</h2>
-      <p class="last-updated">Last updated: {{ currentTime }}</p>
+      <div class="header-right">
+        <p class="last-updated">Last updated: {{ currentTime }}</p>
+        <div class="notification-container">
+          <button class="notification-btn" @click="toggleNotifications">
+            <i class="fas fa-bell"></i>
+            <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+          </button>
+          <div v-if="showNotifications" class="notification-dropdown">
+            <div class="notification-header">
+              <h4>Notifications</h4>
+              <button @click="markAllAsRead" class="mark-read-btn">Mark all as read</button>
+            </div>
+            <div v-if="notifications.length > 0" class="notification-list">
+              <div v-for="notification in notifications" 
+                   :key="notification.id" 
+                   class="notification-item"
+                   :class="{ 'unread': !notification.read }"
+                   @click="handleNotificationClick(notification)">
+                <div class="notification-icon">
+                  <i class="fas" :class="getNotificationIcon(notification.type)"></i>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-message">{{ notification.message }}</p>
+                  <span class="notification-time">{{ formatTimeAgo(notification.timestamp) }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-else class="empty-notifications">
+              No new notifications
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="stats-container">
@@ -61,7 +93,7 @@
 
 <script>
 import { db } from '@/firebase/config'
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore'
+import { collection, getDocs, query, orderBy, limit, where, onSnapshot } from 'firebase/firestore'
 
 export default {
   data() {
@@ -72,7 +104,12 @@ export default {
         completedRequests: 0
       },
       recentRequests: [],
-      currentTime: new Date().toLocaleString()
+      currentTime: new Date().toLocaleString(),
+      showNotifications: false,
+      notifications: [],
+      unreadCount: 0,
+      unsubscribeRequests: null,
+      lastRequestCount: 0
     }
   },
   computed: {
@@ -110,9 +147,16 @@ export default {
   async created() {
     await this.fetchStats()
     await this.fetchRecentRequests()
+    this.setupRealTimeNotifications()
+    
     setInterval(() => {
       this.currentTime = new Date().toLocaleString()
     }, 60000)
+  },
+  beforeUnmount() {
+    if (this.unsubscribeRequests) {
+      this.unsubscribeRequests()
+    }
   },
   methods: {
     async fetchStats() {
@@ -125,6 +169,7 @@ export default {
       const pendingQuery = query(collection(db, 'requests'), where('status', '==', 'pending'))
       const pendingSnapshot = await getDocs(pendingQuery)
       this.stats.pendingRequests = pendingSnapshot.size
+      this.lastRequestCount = pendingSnapshot.size
 
       // Get completed requests count (only from this month)
       const now = new Date()
@@ -150,7 +195,7 @@ export default {
       this.recentRequests = snapshot.docs.map(doc => {
         const data = doc.data()
         return {
-          id: data.id || doc.id, // Use the document ID if no id field exists
+          id: data.id || doc.id,
           userName: data.userName || 'Unknown',
           type: data.type || data.documentType || 'Unknown',
           status: data.status || 'pending',
@@ -158,6 +203,123 @@ export default {
           updatedAt: data.updatedAt?.toDate?.() || null
         }
       })
+    },
+
+    setupRealTimeNotifications() {
+      const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc'))
+      
+      this.unsubscribeRequests = onSnapshot(q, (snapshot) => {
+        // Check for new requests
+        const currentCount = snapshot.docs.filter(doc => 
+          doc.data().status === 'pending').length
+        
+        if (currentCount > this.lastRequestCount) {
+          const newRequests = currentCount - this.lastRequestCount
+          this.addNotification(
+            'new_request',
+            `${newRequests} new request${newRequests > 1 ? 's' : ''} received`,
+            new Date()
+          )
+        }
+        this.lastRequestCount = currentCount
+        
+        // Update recent requests
+        this.recentRequests = snapshot.docs.slice(0, 5).map(doc => {
+          const data = doc.data()
+          return {
+            id: data.id || doc.id,
+            userName: data.userName || 'Unknown',
+            type: data.type || data.documentType || 'Unknown',
+            status: data.status || 'pending',
+            createdAt: data.createdAt?.toDate?.() || null,
+            updatedAt: data.updatedAt?.toDate?.() || null
+          }
+        })
+      })
+    },
+
+    addNotification(type, message, timestamp) {
+      const newNotification = {
+        id: Date.now(),
+        type,
+        message,
+        timestamp,
+        read: false
+      }
+      this.notifications.unshift(newNotification)
+      this.unreadCount++
+      
+      // Play notification sound
+      this.playNotificationSound()
+      
+      // Show browser notification if permitted
+      if (Notification.permission === 'granted') {
+        new Notification('New Barangay Request', {
+          body: message,
+          icon: '/favicon.ico'
+        })
+      }
+    },
+
+    playNotificationSound() {
+      const audio = new Audio('/notification-sound.mp3')
+      audio.play().catch(e => console.log('Audio play failed:', e))
+    },
+
+    toggleNotifications() {
+      this.showNotifications = !this.showNotifications
+      if (this.showNotifications) {
+        this.markAllAsRead()
+      }
+    },
+
+    markAllAsRead() {
+      this.notifications.forEach(notification => {
+        notification.read = true
+      })
+      this.unreadCount = 0
+    },
+
+    handleNotificationClick(notification) {
+      notification.read = true
+      this.unreadCount = Math.max(0, this.unreadCount - 1)
+      
+      // You can add navigation logic here based on notification type
+      if (notification.type === 'new_request') {
+        // Navigate to requests page or refresh data
+        this.fetchRecentRequests()
+        this.fetchStats()
+      }
+    },
+
+    getNotificationIcon(type) {
+      switch (type) {
+        case 'new_request': return 'fa-file-alt'
+        case 'status_update': return 'fa-sync-alt'
+        default: return 'fa-info-circle'
+      }
+    },
+
+    formatTimeAgo(timestamp) {
+      const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000)
+      
+      const intervals = {
+        year: 31536000,
+        month: 2592000,
+        week: 604800,
+        day: 86400,
+        hour: 3600,
+        minute: 60
+      }
+      
+      for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInUnit)
+        if (interval >= 1) {
+          return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`
+        }
+      }
+      
+      return 'Just now'
     },
 
     formatDate(date) {
@@ -168,6 +330,14 @@ export default {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
+      })
+    }
+  },
+  mounted() {
+    // Request notification permission
+    if ('Notification' in window) {
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission)
       })
     }
   }
@@ -202,11 +372,156 @@ export default {
   font-size: 1.5rem;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .last-updated {
   color: #7f8c8d;
   font-size: 0.9rem;
 }
 
+.notification-container {
+  position: relative;
+}
+
+.notification-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.notification-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.notification-btn i {
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: 50px;
+  width: 350px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.notification-header {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.mark-read-btn {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.mark-read-btn:hover {
+  text-decoration: underline;
+}
+
+.notification-list {
+  padding: 0;
+}
+
+.notification-item {
+  padding: 1rem;
+  border-bottom: 1px solid #f5f5f5;
+  display: flex;
+  gap: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #f9f9f9;
+}
+
+.notification-item.unread {
+  background-color: #f8fafd;
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e3f2fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1976d2;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex-grow: 1;
+}
+
+.notification-message {
+  margin: 0 0 0.25rem 0;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.notification-time {
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.empty-notifications {
+  padding: 1.5rem;
+  text-align: center;
+  color: #999;
+}
+
+/* Rest of your existing styles... */
 .stats-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -382,8 +697,18 @@ export default {
     gap: 0.5rem;
   }
   
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
   .stats-container {
     grid-template-columns: 1fr;
+  }
+  
+  .notification-dropdown {
+    width: 280px;
+    right: -20px;
   }
   
   .modern-table th, 
@@ -391,4 +716,4 @@ export default {
     padding: 0.75rem 0.5rem;
   }
 }
-</style>
+</style> 

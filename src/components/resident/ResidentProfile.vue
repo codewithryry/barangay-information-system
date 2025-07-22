@@ -62,7 +62,7 @@
               </div>
               
               <div class="form-group full-width">
-                <label class="form-label">Address</label>
+                <label class="form-label">Address(Sitio)</label>
                 <input v-model="editProfile.address" type="text" class="form-input" required>
               </div>
               
@@ -357,7 +357,7 @@ export default {
       this.profileDetails = [
         {
           icon: 'fas fa-map-marker-alt',
-          label: 'Address',
+          label: 'Address(Sitio)',
           value: this.profile.address || 'Not provided'
         },
         {
